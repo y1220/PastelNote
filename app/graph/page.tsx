@@ -24,8 +24,13 @@ export default function GraphPage() {
     relationshipCount: 0,
     mostConnected: { name: "", connections: 0 }
   })
+  // Add mounted state to prevent hydration mismatch
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    // Set mounted to true once component is mounted
+    setMounted(true)
+
     // Fetch real data from Neo4j
     const fetchGraphData = async () => {
       try {
@@ -89,6 +94,24 @@ export default function GraphPage() {
     fetchGraphData()
   }, [])
 
+  // If not mounted yet, render a minimal version to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-pastel-bg">
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold text-pastel-primary">Knowledge Graph</h1>
+          <div className="h-[600px] flex items-center justify-center">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-pastel-primary border-t-transparent mb-4"></div>
+              <p className="text-pastel-secondary">Loading your knowledge graph...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Original render after component is mounted
   return (
     <div className="min-h-screen bg-pastel-bg">
       <div className="container mx-auto px-4 py-8">
