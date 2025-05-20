@@ -1,0 +1,8 @@
+FastAPI
+uvicorn
+pydantic
+sqlalchemy
+databases
+python-multipart
+passlib[bcrypt]
+python-dotenv
