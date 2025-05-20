@@ -1,33 +1,22 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Image from "next/image"
 import { motion } from "framer-motion"
+import Image from "next/image"
 
 interface CatMascotProps {
   message?: string
 }
 
-export function CatMascot({ message = "Meow! Let's take some notes!" }: CatMascotProps) {
-  const [catMessage, setCatMessage] = useState(message)
+export function CatMascot({ message = "Ready to take some purr-fect notes today?" }: CatMascotProps) {
   const [isAnimating, setIsAnimating] = useState(false)
 
-  const encouragements = [
-    "You're doing great! Keep those notes coming!",
-    "Purr-fect progress on your study notes!",
-    "Your knowledge graph is looking paw-some!",
-    "Don't fur-get to connect related ideas!",
-    "Taking notes is the cat's meow for learning!",
-    "You're feline fine with your study progress!",
-  ]
-
   useEffect(() => {
+    // Animate occasionally to draw attention
     const interval = setInterval(() => {
-      const randomMessage = encouragements[Math.floor(Math.random() * encouragements.length)]
-      setCatMessage(randomMessage)
       setIsAnimating(true)
-      setTimeout(() => setIsAnimating(false), 1000)
-    }, 60000) // Change message every minute
+      setTimeout(() => setIsAnimating(false), 500)
+    }, 10000)
 
     return () => clearInterval(interval)
   }, [])
@@ -44,17 +33,16 @@ export function CatMascot({ message = "Meow! Let's take some notes!" }: CatMasco
         }}
         transition={{ duration: 0.3 }}
       >
-        <p className="text-pastel-secondary">{catMessage}</p>
+        <p className="text-pastel-secondary">{message}</p>
       </motion.div>
 
       <motion.div whileHover={{ rotate: [0, -5, 5, -5, 0] }} transition={{ duration: 0.5 }}>
-        <div className="relative w-32 h-32">
+        <div className="relative w-36 h-36 flex items-center justify-center">
           <Image
-            src="/placeholder.svg?height=128&width=128"
+            src="/cat_face.png"
             alt="Cute cat mascot"
-            width={128}
-            height={128}
-            className="rounded-full bg-pastel-accent p-2"
+            width={136}
+            height={136}
           />
         </div>
       </motion.div>
