@@ -1,6 +1,7 @@
 import { NotesList } from "@/components/notes-list"
 import { CatMascot } from "@/components/cat-mascot"
 import { CreateNoteButton } from "@/components/create-note-button"
+import { NotesApiTest } from "@/components/notes-api-test"
 
 export default function HomePage() {
   return (
