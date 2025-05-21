@@ -17,22 +17,41 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { notesApi } from "@/lib/api"
 
-export function CreateNoteButton() {
+export function CreateNoteButton({ onNoteCreated }: { onNoteCreated?: () => void } = {}) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [tags, setTags] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, you would save the note to your database here
-    console.log({ title, content, tags: tags.split(",").map((tag) => tag.trim()) })
-    setOpen(false)
-    // Reset form
-    setTitle("")
-    setContent("")
-    setTags("")
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await notesApi.create({
+        title,
+        content,
+        tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+      })
+      if (response.error) {
+        setError(response.error)
+        setLoading(false)
+        return
+      }
+      setOpen(false)
+      setTitle("")
+      setContent("")
+      setTags("")
+      if (onNoteCreated) onNoteCreated()
+    } catch (err: any) {
+      setError(err.message || "Failed to create note.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -52,6 +71,9 @@ export function CreateNoteButton() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            {error && (
+              <div className="text-red-500 text-sm">{error}</div>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="title" className="text-pastel-secondary">
                 Title
@@ -92,11 +114,11 @@ export function CreateNoteButton() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-pastel-primary hover:bg-pastel-primary/90">
-              Save Note
+            <Button type="submit" className="bg-pastel-primary hover:bg-pastel-primary/90" disabled={loading}>
+              {loading ? "Saving..." : "Save Note"}
             </Button>
           </DialogFooter>
         </form>
