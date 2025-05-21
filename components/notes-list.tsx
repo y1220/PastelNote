@@ -1,42 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Tag, Network, Sparkles } from "lucide-react"
-
-// Sample data - in a real app, this would come from your database
-const sampleNotes = [
-  {
-    id: 1,
-    title: "Introduction to Graph Databases",
-    content:
-      "Graph databases like Neo4j store data in nodes and relationships, making it perfect for connected data...",
-    tags: ["neo4j", "databases", "graph theory"],
-    createdAt: "2023-05-01T10:30:00Z",
-    updatedAt: "2023-05-01T11:45:00Z",
-  },
-  {
-    id: 2,
-    title: "AI and Natural Language Processing",
-    content: "Modern AI models like Gemini can understand and generate human language with remarkable accuracy...",
-    tags: ["ai", "nlp", "gemini"],
-    createdAt: "2023-05-03T14:20:00Z",
-    updatedAt: "2023-05-03T16:15:00Z",
-  },
-  {
-    id: 3,
-    title: "Knowledge Graphs for Learning",
-    content: "Connecting concepts in a knowledge graph helps with retention and understanding complex topics...",
-    tags: ["learning", "knowledge graph", "study techniques"],
-    createdAt: "2023-05-05T09:10:00Z",
-    updatedAt: "2023-05-05T10:30:00Z",
-  },
-]
+import { notesApi } from "@/lib/api"
 
 export function NotesList() {
-  const [notes, setNotes] = useState(sampleNotes)
+  const [notes, setNotes] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchNotes = async () => {
+      setLoading(true)
+      setError(null)
+      const response = await notesApi.getAll()
+      if (response.error) {
+        setError(response.error)
+        setNotes([])
+      } else {
+        setNotes(response.data || [])
+      }
+      setLoading(false)
+    }
+    fetchNotes()
+  }, [])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -46,21 +36,28 @@ export function NotesList() {
     })
   }
 
+  if (loading) {
+    return <div className="text-center text-pastel-secondary py-8">Loading notes...</div>
+  }
+  if (error) {
+    return <div className="text-center text-red-500 py-8">Error: {error}</div>
+  }
+
   return (
     <div className="grid gap-4">
       {notes.map((note) => (
-        <Card key={note.id} className="bg-white hover:shadow-lg transition-shadow">
+        <Card key={note.id || note._id} className="bg-white hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle className="text-pastel-primary">{note.title}</CardTitle>
             <CardDescription className="flex items-center text-pastel-secondary">
               <Clock className="h-4 w-4 mr-1" />
-              Updated {formatDate(note.updatedAt)}
+              Updated {formatDate(note.updatedAt || note.updated_at || note.createdAt || note.created_at)}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-pastel-dark mb-4">{note.content}</p>
             <div className="flex flex-wrap gap-2">
-              {note.tags.map((tag) => (
+              {(note.tags || []).map((tag: string) => (
                 <Badge key={tag} variant="outline" className="bg-pastel-light text-pastel-secondary">
                   <Tag className="h-3 w-3 mr-1" />
                   {tag}

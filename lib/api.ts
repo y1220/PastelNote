@@ -1,7 +1,7 @@
 // lib/api.ts
 import logger from './logger';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000/api';
 
 // Type definitions for API responses
 interface ApiResponse<T> {
