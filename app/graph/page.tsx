@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Network, Filter, Download, ZoomIn, ZoomOut, Maximize } from "lucide-react"
 import { CatMascot } from "@/components/cat-mascot"
 import dynamic from 'next/dynamic'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 
 // Import force graph using dynamic import with no SSR
 const ForceGraph2D = dynamic(
@@ -26,6 +27,7 @@ export default function GraphPage() {
   })
   // Add mounted state to prevent hydration mismatch
   const [mounted, setMounted] = useState(false)
+  const [selectedNode, setSelectedNode] = useState<any | null>(null)
 
   useEffect(() => {
     // Set mounted to true once component is mounted
@@ -168,17 +170,38 @@ export default function GraphPage() {
                       </div>
                     </div>
                   ) : (
-                    <ForceGraph2D
-                      graphData={graphData}
-                      nodeLabel={(node: any) => `${node.name} (${node.type})`}
-                      linkLabel={(link: any) => link.type}
-                      nodeAutoColorBy="type"
-                      linkDirectionalArrowLength={3}
-                      linkDirectionalArrowRelPos={1}
-                      linkCurvature={0.25}
-                      height={450}
-                      width={800}
-                    />
+                    <>
+                      <ForceGraph2D
+                        graphData={graphData}
+                        nodeLabel={(node: any) => `${node.name} (${node.type})`}
+                        linkLabel={(link: any) => link.type}
+                        nodeAutoColorBy="type"
+                        linkDirectionalArrowLength={3}
+                        linkDirectionalArrowRelPos={1}
+                        linkCurvature={0.25}
+                        height={450}
+                        width={800}
+                        onNodeClick={(node) => setSelectedNode(node)}
+                      />
+                      <Dialog open={!!selectedNode} onOpenChange={(open) => !open && setSelectedNode(null)}>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Node Details</DialogTitle>
+                            <DialogDescription>
+                              {selectedNode ? `Details for node "${selectedNode.name || selectedNode.label}"` : ""}
+                            </DialogDescription>
+                          </DialogHeader>
+                          {selectedNode && (
+                            <div className="space-y-2 mt-2">
+                              <div><b>Name:</b> {selectedNode.name || selectedNode.label}</div>
+                              <div><b>Type:</b> {selectedNode.type}</div>
+                              <div><b>ID:</b> {selectedNode.id}</div>
+                              {/* Add more node details here if needed */}
+                            </div>
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                    </>
                   )}
                 </div>
               </CardContent>
