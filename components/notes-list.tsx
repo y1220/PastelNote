@@ -18,23 +18,36 @@ export function NotesList() {
   const [editForm, setEditForm] = useState({ title: '', content: '', tags: '' })
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
+  // Pagination state
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(3)
+  const [total, setTotal] = useState<number | null>(null)
 
-  const fetchNotes = async () => {
+  const fetchNotes = async (pageNum = page) => {
     setLoading(true)
     setError(null)
-    const response = await notesApi.getAll()
+    const skip = (pageNum - 1) * pageSize
+    const response = await notesApi.getAll({ skip, limit: pageSize })
     if (response.error) {
       setError(response.error)
       setNotes([])
+      setTotal(null)
     } else {
       setNotes(response.data || [])
+      // If less than pageSize, assume last page
+      if (Array.isArray(response.data) && response.data.length < pageSize) {
+        setTotal(skip + (response.data?.length || 0))
+      } else {
+        setTotal(null)
+      }
     }
     setLoading(false)
   }
 
   useEffect(() => {
-    fetchNotes()
-  }, [])
+    fetchNotes(page)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -131,6 +144,25 @@ export function NotesList() {
             </CardFooter>
           </Card>
         ))}
+      </div>
+      <div className="flex justify-center items-center gap-4 mt-6">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage(page - 1)}
+          disabled={page === 1 || loading}
+        >
+          Previous
+        </Button>
+        <span className="text-pastel-secondary text-sm">Page {page}</span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage(page + 1)}
+          disabled={notes.length < pageSize || (total !== null && page * pageSize >= total) || loading}
+        >
+          Next
+        </Button>
       </div>
       <Dialog open={!!editNote} onOpenChange={open => { if (!open) closeEditModal() }}>
         <DialogContent>

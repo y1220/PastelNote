@@ -24,7 +24,7 @@ async def read_notes(
     limit: int = 100
 ):
     """Get all notes with pagination"""
-    return await note_service.get_notes()
+    return await note_service.get_notes(skip=skip, limit=limit)
 
 @router.get("/search", response_model=List[NoteRead])
 async def search_notes(

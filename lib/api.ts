@@ -53,7 +53,16 @@ async function apiCall<T>(
 
 // Notes API
 export const notesApi = {
-  getAll: () => apiCall<any[]>('/notes'),
+  getAll: (params?: { skip?: number; limit?: number }) => {
+    let query = ''
+    if (params) {
+      const q = []
+      if (typeof params.skip === 'number') q.push(`skip=${params.skip}`)
+      if (typeof params.limit === 'number') q.push(`limit=${params.limit}`)
+      if (q.length) query = '?' + q.join('&')
+    }
+    return apiCall<any[]>(`/notes${query}`)
+  },
   getById: (id: number) => apiCall<any>(`/notes/${id}`),
   create: (note: any) => apiCall<any>('/notes', 'POST', note),
   update: (id: number, note: any) => apiCall<any>(`/notes/${id}`, 'PUT', note),

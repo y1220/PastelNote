@@ -42,12 +42,12 @@ class NoteService:
             print(f"Error retrieving note: {e}")
             return None
 
-    async def get_notes(self) -> List[Note]:
-        """Get all notes"""
+    async def get_notes(self, skip: int = 0, limit: int = 100) -> List[Note]:
+        """Get all notes with pagination"""
         collection = await self.__get_collection()
         notes = []
 
-        cursor = collection.find({}).sort("created_at", -1)
+        cursor = collection.find({}).sort("created_at", -1).skip(skip).limit(limit)
         async for document in cursor:
             note = Note.from_mongo(document)
             if note:
