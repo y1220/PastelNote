@@ -6,25 +6,33 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Tag, Network, Sparkles } from "lucide-react"
 import { notesApi } from "@/lib/api"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 
 export function NotesList() {
   const [notes, setNotes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editNote, setEditNote] = useState<any | null>(null)
+  const [editForm, setEditForm] = useState({ title: '', content: '', tags: '' })
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+
+  const fetchNotes = async () => {
+    setLoading(true)
+    setError(null)
+    const response = await notesApi.getAll()
+    if (response.error) {
+      setError(response.error)
+      setNotes([])
+    } else {
+      setNotes(response.data || [])
+    }
+    setLoading(false)
+  }
 
   useEffect(() => {
-    const fetchNotes = async () => {
-      setLoading(true)
-      setError(null)
-      const response = await notesApi.getAll()
-      if (response.error) {
-        setError(response.error)
-        setNotes([])
-      } else {
-        setNotes(response.data || [])
-      }
-      setLoading(false)
-    }
     fetchNotes()
   }, [])
 
@@ -36,6 +44,46 @@ export function NotesList() {
     })
   }
 
+  const openEditModal = (note: any) => {
+    setEditNote(note)
+    setEditForm({
+      title: note.title || '',
+      content: note.content || '',
+      tags: (note.tags || []).join(', ')
+    })
+    setEditError(null)
+  }
+
+  const closeEditModal = () => {
+    setEditNote(null)
+    setEditForm({ title: '', content: '', tags: '' })
+    setEditError(null)
+  }
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value })
+  }
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editNote) return
+    setEditLoading(true)
+    setEditError(null)
+    const updatedNote = {
+      title: editForm.title,
+      content: editForm.content,
+      tags: editForm.tags.split(',').map(t => t.trim()).filter(Boolean)
+    }
+    const response = await notesApi.update(editNote.id || editNote._id, updatedNote)
+    if (response.error) {
+      setEditError(response.error)
+    } else {
+      closeEditModal()
+      fetchNotes()
+    }
+    setEditLoading(false)
+  }
+
   if (loading) {
     return <div className="text-center text-pastel-secondary py-8">Loading notes...</div>
   }
@@ -44,39 +92,81 @@ export function NotesList() {
   }
 
   return (
-    <div className="grid gap-4">
-      {notes.map((note) => (
-        <Card key={note.id || note._id} className="bg-white hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle className="text-pastel-primary">{note.title}</CardTitle>
-            <CardDescription className="flex items-center text-pastel-secondary">
-              <Clock className="h-4 w-4 mr-1" />
-              Updated {formatDate(note.updatedAt || note.updated_at || note.createdAt || note.created_at)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-pastel-dark mb-4">{note.content}</p>
-            <div className="flex flex-wrap gap-2">
-              {(note.tags || []).map((tag: string) => (
-                <Badge key={tag} variant="outline" className="bg-pastel-light text-pastel-secondary">
-                  <Tag className="h-3 w-3 mr-1" />
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" size="sm" className="text-pastel-secondary">
-              <Network className="h-4 w-4 mr-2" />
-              View in Graph
-            </Button>
-            <Button variant="outline" size="sm" className="text-pastel-secondary">
-              <Sparkles className="h-4 w-4 mr-2" />
-              AI Insights
-            </Button>
-          </CardFooter>
-        </Card>
-      ))}
-    </div>
+    <>
+      <div className="grid gap-4">
+        {notes.map((note) => (
+          <Card key={note.id || note._id} className="bg-white hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="text-pastel-primary">{note.title}</CardTitle>
+              <CardDescription className="flex items-center text-pastel-secondary">
+                <Clock className="h-4 w-4 mr-1" />
+                Updated {formatDate(note.updatedAt || note.updated_at || note.createdAt || note.created_at)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-pastel-dark mb-4">{note.content}</p>
+              <div className="flex flex-wrap gap-2">
+                {(note.tags || []).map((tag: string) => (
+                  <Badge key={tag} variant="outline" className="bg-pastel-light text-pastel-secondary">
+                    <Tag className="h-3 w-3 mr-1" />
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between gap-2">
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="text-pastel-secondary">
+                  <Network className="h-4 w-4 mr-2" />
+                  View in Graph
+                </Button>
+                <Button variant="outline" size="sm" className="text-pastel-secondary">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Insights
+                </Button>
+              </div>
+              <Button variant="outline" size="sm" className="text-pastel-secondary" onClick={() => openEditModal(note)}>
+                Edit
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+      <Dialog open={!!editNote} onOpenChange={open => { if (!open) closeEditModal() }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Note</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <Input
+              name="title"
+              value={editForm.title}
+              onChange={handleEditChange}
+              placeholder="Title"
+              required
+            />
+            <Textarea
+              name="content"
+              value={editForm.content}
+              onChange={handleEditChange}
+              placeholder="Content"
+              rows={4}
+              required
+            />
+            <Input
+              name="tags"
+              value={editForm.tags}
+              onChange={handleEditChange}
+              placeholder="Tags (comma separated)"
+            />
+            {editError && <div className="text-red-500 text-sm">{editError}</div>}
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={closeEditModal} disabled={editLoading}>Cancel</Button>
+              <Button type="submit" disabled={editLoading}>{editLoading ? 'Saving...' : 'Save'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
