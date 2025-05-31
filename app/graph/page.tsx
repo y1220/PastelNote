@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -28,6 +28,71 @@ export default function GraphPage() {
   // Add mounted state to prevent hydration mismatch
   const [mounted, setMounted] = useState(false)
   const [selectedNode, setSelectedNode] = useState<any | null>(null)
+  const graphRef = useRef<any>(null)
+  const [zoom, setZoom] = useState(1)
+
+  const handleZoomIn = () => {
+    if (graphRef.current) {
+      const newZoom = Math.min(zoom + 0.2, 5)
+      graphRef.current.zoom(newZoom, 400)
+      setZoom(newZoom)
+    }
+  }
+  const handleZoomOut = () => {
+    if (graphRef.current) {
+      const newZoom = Math.max(zoom - 0.2, 0.2)
+      graphRef.current.zoom(newZoom, 400)
+      setZoom(newZoom)
+    }
+  }
+  const handleMaximize = () => {
+    if (graphRef.current) {
+      graphRef.current.zoomToFit(400)
+    }
+  }
+  const handleDownload = () => {
+    console.log("[Graph Download] Download button clicked");
+    if (!graphRef.current) {
+      console.warn("[Graph Download] graphRef.current is null");
+      return;
+    }
+    // Try to get the canvas via renderer().domElement
+    let canvas = null;
+    if (graphRef.current.renderer && typeof graphRef.current.renderer === 'function') {
+      const renderer = graphRef.current.renderer();
+      if (renderer && renderer.domElement) {
+        canvas = renderer.domElement;
+        console.log("[Graph Download] Got canvas from renderer().domElement");
+      }
+    }
+    if (!canvas) {
+      // fallback: try to find canvas in the DOM
+      const fgDiv = document.querySelector('canvas');
+      if (fgDiv) {
+        canvas = fgDiv;
+        console.log("[Graph Download] Got canvas from document.querySelector('canvas')");
+      }
+    }
+    if (!canvas) {
+      console.warn("[Graph Download] Could not find canvas element");
+      return;
+    }
+    if (!canvas.toDataURL) {
+      console.warn("[Graph Download] canvas.toDataURL is not a function");
+      return;
+    }
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      console.log("[Graph Download] dataUrl generated", dataUrl.slice(0, 50) + '...');
+      const link = document.createElement('a');
+      link.download = 'graph.png';
+      link.href = dataUrl;
+      link.click();
+      console.log("[Graph Download] Download triggered");
+    } catch (err) {
+      console.error("[Graph Download] Error during download:", err);
+    }
+  }
 
   useEffect(() => {
     // Set mounted to true once component is mounted
@@ -147,16 +212,16 @@ export default function GraphPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex justify-end gap-2 mb-4">
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" onClick={handleZoomIn}>
                     <ZoomIn className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" onClick={handleZoomOut}>
                     <ZoomOut className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" onClick={handleMaximize}>
                     <Maximize className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" onClick={handleDownload}>
                     <Download className="h-4 w-4" />
                   </Button>
                 </div>
@@ -172,6 +237,7 @@ export default function GraphPage() {
                   ) : (
                     <>
                       <ForceGraph2D
+                        ref={graphRef}
                         graphData={graphData}
                         nodeLabel={(node: any) => `${node.name} (${node.type})`}
                         linkLabel={(link: any) => link.type}
