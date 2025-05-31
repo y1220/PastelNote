@@ -205,7 +205,7 @@ export default function GraphPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="md:col-span-3">
-            <Card className="bg-white h-[600px]">
+            <Card className="bg-white h-[800px]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-pastel-primary">Visualization</CardTitle>
                 <CardDescription>Explore connections between your notes and concepts</CardDescription>
@@ -226,7 +226,7 @@ export default function GraphPage() {
                   </Button>
                 </div>
 
-                <div className="bg-pastel-light rounded-lg h-[450px]">
+                <div className="bg-pastel-light rounded-lg h-[700px]">
                   {isLoading ? (
                     <div className="h-full flex items-center justify-center">
                       <div className="text-center">
@@ -245,8 +245,8 @@ export default function GraphPage() {
                         linkDirectionalArrowLength={3}
                         linkDirectionalArrowRelPos={1}
                         linkCurvature={0.25}
-                        height={450}
-                        width={800}
+                        height={700}
+                        width={900}
                         onNodeClick={(node) => setSelectedNode(node)}
                         nodeCanvasObject={(node, ctx, globalScale) => {
                           if (typeof node.x !== 'number' || typeof node.y !== 'number') return;
