@@ -248,6 +248,24 @@ export default function GraphPage() {
                         height={450}
                         width={800}
                         onNodeClick={(node) => setSelectedNode(node)}
+                        nodeCanvasObject={(node, ctx, globalScale) => {
+                          if (typeof node.x !== 'number' || typeof node.y !== 'number') return;
+                          // Draw node as a circle
+                          ctx.beginPath();
+                          ctx.arc(node.x, node.y, 8, 0, 2 * Math.PI, false);
+                          ctx.fillStyle = node.color || (node.type === 'note' ? '#FF9580' : '#7B61FF');
+                          ctx.fill();
+                          ctx.strokeStyle = '#fff';
+                          ctx.lineWidth = 1.5;
+                          ctx.stroke();
+                          // Draw node name with smaller text
+                          const label = node.name || node.label || '';
+                          ctx.font = `${Math.max(8, 10/globalScale)}px Sans-Serif`;
+                          ctx.textAlign = 'center';
+                          ctx.textBaseline = 'top';
+                          ctx.fillStyle = '#333';
+                          ctx.fillText(label, node.x, node.y + 10);
+                        }}
                       />
                       <Dialog open={!!selectedNode} onOpenChange={(open) => !open && setSelectedNode(null)}>
                         <DialogContent>
