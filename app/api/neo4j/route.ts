@@ -19,35 +19,40 @@ function formatGraphResults(records: any[]) {
   const relationships: any[] = [];
   const nodeMap = new Map();
 
-  records.forEach((record) => {
-    // Process all keys in the record that might contain nodes
-    record.keys.forEach((key: any) => {
-      const item = record.get(key);
-      // Check if the item is a node
-      if (item && item.identity && item.labels) {
-        if (!nodeMap.has(item.identity.toString())) {
-          nodeMap.set(item.identity.toString(), true);
-          nodes.push({
+  const addNode = (item: any) => {
+    if (item && item.identity && item.labels && !nodeMap.has(item.identity.toString())) {
+      nodeMap.set(item.identity.toString(), true);
+      nodes.push({
+        id: item.identity.toString(),
+        label: item.properties.name || item.properties.title ||
+              (item.labels.length > 0 ? item.labels[0] : "Node"),
+        type: item.labels.length > 0 ? item.labels[0].toLowerCase() : "node",
+        ...item.properties
+      });
+    }
+  };      const addRelationship = (item: any) => {
+        if (item && item.type && item.startNode && item.endNode) {
+          relationships.push({
             id: item.identity.toString(),
-            // Make sure we have a reasonable label even if name/title is missing
-            label: item.properties.name || item.properties.title ||
-                  (item.labels.length > 0 ? item.labels[0] : "Node"),
-            // Get the first label or default to "node"
-            type: item.labels.length > 0 ? item.labels[0].toLowerCase() : "node",
+            source: item.startNode.identity.toString(),
+            target: item.endNode.identity.toString(),
+            type: item.type,
             ...item.properties
           });
+        } else {
+          logger.warn(`Invalid relationship structure: ${JSON.stringify(item, null, 2)}`);
         }
-      }
+      };
 
-      // Check if the item is a relationship
-      if (item && item.type && item.start && item.end) {
-        relationships.push({
-          id: item.identity.toString(),
-          source: item.start.toString(),
-          target: item.end.toString(),
-          type: item.type,
-          ...item.properties
-        });
+  records.forEach((record) => {
+    // Process all keys in the record that might contain nodes or relationships
+    record.keys.forEach((key: any) => {
+      const item = record.get(key);
+      if (key === 'note' || key === 'connected' || key === 'secondDegree' || key === 'n' || key === 'm') {
+        addNode(item);
+      }
+      if (key === 'r' || key === 'r1' || key === 'r2') {
+        addRelationship(item);
       }
     });
   });
@@ -55,20 +60,55 @@ function formatGraphResults(records: any[]) {
   return { nodes, relationships };
 }
 
-export async function GET() {
-  // Use mock data if Neo4j connection fails
+export async function GET(req: Request) {
   try {
-    logger.info('Neo4j GET request received');
+    const { searchParams } = new URL(req.url);
+    const noteId = searchParams.get('noteId');
+
+    logger.info(`Neo4j GET request received${noteId ? ` for noteId: ${noteId}` : ''}`);
     const session = driver.session();
     try {
-      // Query to get all nodes and relationships
-      const result = await session.run(`
-        MATCH (n)-[r]->(m)
-        RETURN n, r, m
-      `);
+      // Query to get nodes and relationships, filtered by noteId if provided
+      const result = await session.run(
+        noteId
+          ? `
+            MATCH (note:GraphNode {noteId: $noteId})
+            WITH note
+            OPTIONAL MATCH (note)-[r1:RELATED|MENTIONS|REFERS_TO|IS_A]-(connected:GraphNode)
+            WITH DISTINCT note, r1, connected
+            OPTIONAL MATCH (connected)-[r2:RELATED|MENTIONS|REFERS_TO|IS_A]-(secondDegree:GraphNode)
+            WHERE secondDegree <> note
+            WITH DISTINCT note, r1, connected, r2, secondDegree
+            RETURN
+              note as rootNode,
+              collect(DISTINCT r1) as directRelationships,
+              collect(DISTINCT connected) as connectedNodes,
+              collect(DISTINCT r2) as indirectRelationships,
+              collect(DISTINCT secondDegree) as indirectNodes
+          `
+          : `
+            MATCH (n:GraphNode)-[r]->(m:GraphNode)
+            RETURN n, r, m
+          `,
+        noteId ? { noteId } : {}
+      );
 
       const graphData = formatGraphResults(result.records);
       logger.info(`Neo4j query returned ${graphData.nodes.length} nodes and ${graphData.relationships.length} relationships`);
+
+      // Debug logging
+      const debugInfo = {
+        params: { noteId },
+        nodeTypes: graphData.nodes.map((n: any) => n.type),
+        nodeSample: graphData.nodes[0],
+        relationshipSample: graphData.relationships[0]
+      };
+      logger.info(`Graph debug info: ${JSON.stringify(debugInfo, null, 2)}`);
+
+      if (graphData.nodes.length === 0) {
+        logger.warn(`No nodes found${noteId ? ` for noteId: ${noteId}` : ''}`);
+      }
+
       return NextResponse.json(graphData);
     } finally {
       await session.close();

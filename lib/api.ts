@@ -68,6 +68,7 @@ export const notesApi = {
   update: (id: number, note: any) => apiCall<any>(`/notes/${id}`, 'PUT', note),
   delete: (id: number) => apiCall<any>(`/notes/${id}`, 'DELETE'),
   search: (query: string) => apiCall<any[]>(`/notes/search?query=${encodeURIComponent(query)}`),
+  graphify: (id: string) => apiCall<any>(`/graphify-note`, 'POST', { note_id: id }),
 };
 
 export default {

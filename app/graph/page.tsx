@@ -250,10 +250,22 @@ export default function GraphPage() {
                         onNodeClick={(node) => setSelectedNode(node)}
                         nodeCanvasObject={(node, ctx, globalScale) => {
                           if (typeof node.x !== 'number' || typeof node.y !== 'number') return;
+                          // Color by type
+                          let color = '#7B61FF'; // default purple
+                          if (node.type === 'note' || node.type === 'Note') color = '#FF9580';
+                          else if (node.type === 'concept' || node.type === 'Concept') color = '#7B61FF';
+                          else if (node.type === 'event' || node.type === 'Event') color = '#FFD36E';
+                          else if (node.type === 'plan' || node.type === 'Plan') color = '#6EE7B7';
+                          else if (node.type === 'distance' || node.type === 'Distance') color = '#60A5FA';
+                          else if (node.type === 'database' || node.type === 'Database') color = '#F472B6';
+                          else if (node.type === 'databasetype' || node.type === 'DatabaseType') color = '#FBBF24';
+                          else if (node.type === 'datastructure' || node.type === 'DataStructure') color = '#34D399';
+                          else if (node.type === 'datatype' || node.type === 'DataType') color = '#818CF8';
+                          else if (node.type === 'graphnode' || node.type === 'GraphNode') color = '#A3E635';
                           // Draw node as a circle
                           ctx.beginPath();
                           ctx.arc(node.x, node.y, 8, 0, 2 * Math.PI, false);
-                          ctx.fillStyle = node.color || (node.type === 'note' ? '#FF9580' : '#7B61FF');
+                          ctx.fillStyle = color;
                           ctx.fill();
                           ctx.strokeStyle = '#fff';
                           ctx.lineWidth = 1.5;
@@ -354,3 +366,6 @@ export default function GraphPage() {
     </div>
   )
 }
+
+// Add a dedicated graph view for a single note
+// Add a new page: /graph/[noteId]/page.tsx
