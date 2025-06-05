@@ -73,11 +73,22 @@ async def graphify_note(request: GraphifyRequest):
 
     driver = get_neo4j_driver()
     with driver.session() as session:
+        # Remove all existing nodes and relationships for this note
+        session.run(
+            """
+            MATCH (n:GraphNode {noteId: $noteId})
+            OPTIONAL MATCH (n)-[r]-()
+            DELETE r, n
+            """,
+            noteId=request.note_id
+        )
+        # Create nodes
         for node in graph_json["nodes"]:
             session.run(
                 "MERGE (n:GraphNode {id: $id}) SET n.label=$label, n.type=$type, n.noteId=$noteId",
                 id=node["id"], label=node["label"], type=node["type"], noteId=node["noteId"]
             )
+        # Create relationships
         for rel in graph_json["relationships"]:
             session.run(
                 "MATCH (a:GraphNode {id: $source}) MATCH (b:GraphNode {id: $target}) MERGE (a)-[r:RELATED {type: $type}]->(b)",

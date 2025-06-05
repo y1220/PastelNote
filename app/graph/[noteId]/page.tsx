@@ -147,6 +147,25 @@ export default function NoteGraphPage() {
     router.back()
   }
 
+  const handleDownload = () => {
+    let canvas: HTMLCanvasElement | null = null;
+    if (graphRef.current && graphRef.current.canvas) {
+      canvas = graphRef.current.canvas();
+    } else {
+      if (containerRef.current) {
+        canvas = containerRef.current.querySelector('canvas');
+      } else {
+        canvas = document.querySelector('canvas');
+      }
+    }
+    if (canvas && canvas.toDataURL) {
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = "graph.png";
+      link.click();
+    }
+  }
+
   function getNodeColor(type: string) {
     switch ((type || "").toLowerCase()) {
       case "note": return "#FF9580"
@@ -192,6 +211,9 @@ export default function NoteGraphPage() {
                   </Button>
                   <Button variant="outline" size="icon" onClick={handleMaximize}>
                     <Maximize className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={handleDownload}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
                   </Button>
                 </div>
                 <div className="bg-pastel-light rounded-lg flex-1 min-h-[400px]" ref={containerRef}>
