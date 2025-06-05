@@ -49,14 +49,14 @@ function formatGraphResults(records: any[]) {
   records.forEach((record) => {
     record.keys.forEach((key: any) => {
       const item = record.get(key);
-      if (key === 'note' || key === 'connected' || key === 'secondDegree' || key === 'n' || key === 'm') {
+      if (key === 'note' || key === 'connected' || key === 'secondDegree' || key === 'n' || key === 'm' || key === 'a' || key === 'b') {
         addNode(item);
       }
     });
 
     // Relationship extraction:
-    if (record.has('r') || record.has('r1')) {
-      const rel = record.get('r') || record.get('r1');
+    if (record.has('r')) {
+      const rel = record.get('r');
       const sourceId = record.get('sourceId');
       const targetId = record.get('targetId');
       if (rel && sourceId && targetId) {
@@ -96,9 +96,10 @@ export async function GET(req: Request) {
       const result = await session.run(
         noteId
           ? `
-            MATCH (n:GraphNode {noteId: $noteId})
-            OPTIONAL MATCH (n)-[r]->(m:GraphNode)
-            RETURN n, r, m
+            MATCH (a:GraphNode)
+            WHERE a.noteId = $noteId
+            OPTIONAL MATCH (a)-[r]->(b:GraphNode)
+            RETURN a, r, b, a.id as sourceId, b.id as targetId
           `
           : `
             MATCH (n:GraphNode)-[r]->(m:GraphNode)

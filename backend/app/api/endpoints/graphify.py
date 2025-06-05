@@ -73,24 +73,38 @@ async def graphify_note(request: GraphifyRequest):
 
     driver = get_neo4j_driver()
     with driver.session() as session:
-        # Remove all existing nodes and relationships for this note
+        # Remove all existing nodes, relationships, and the Note node for this note
         session.run(
             """
-            MATCH (n:GraphNode {noteId: $noteId})
-            OPTIONAL MATCH (note)-[r1]-(connected:GraphNode)
-            OPTIONAL MATCH (n)-[r]-()
-            DELETE r, n
+            MATCH (note:Note {id: $noteId})
+            OPTIONAL MATCH (note)-[r1]-()
+            OPTIONAL MATCH (n:GraphNode {noteId: $noteId})
+            OPTIONAL MATCH (n)-[r2]-()
+            DELETE r1, r2, note, n
             """,
             noteId=request.note_id
         )
-        # Create nodes
+        # Create or merge the Note node
+        session.run(
+            "MERGE (note:Note {id: $noteId})",
+            noteId=request.note_id
+        )
+        # Create nodes and connect them to the Note node
+        import logging
         for node in graph_json["nodes"]:
+            logging.info(f"Creating GraphNode: {node}")
             session.run(
                 "MERGE (n:GraphNode {id: $id}) SET n.label=$label, n.type=$type, n.noteId=$noteId",
                 id=node["id"], label=node["label"], type=node["type"], noteId=node["noteId"]
             )
+            # Connect Note node to GraphNode
+            session.run(
+                "MATCH (note:Note {id: $noteId}), (n:GraphNode {id: $id}) MERGE (note)-[:HAS_GRAPH_NODE]->(n)",
+                noteId=request.note_id, id=node["id"]
+            )
         # Create relationships
         for rel in graph_json["relationships"]:
+            logging.info(f"Creating RELATED relationship: {rel}")
             session.run(
                 "MATCH (a:GraphNode {id: $source}) MATCH (b:GraphNode {id: $target}) MERGE (a)-[r:RELATED {type: $type}]->(b)",
                 source=rel["source"], target=rel["target"], type=rel["type"]
