@@ -31,10 +31,11 @@ export default function NoteGraphPage() {
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
         setDimensions({
-          width: containerRef.current.offsetWidth,
-          height: containerRef.current.offsetHeight
-        })
+          width: Math.round(rect.width),
+          height: Math.round(rect.height)
+        });
       }
     }
 
@@ -162,17 +163,45 @@ export default function NoteGraphPage() {
       const legendDiv = containerRef.current?.querySelector('.graph-legend') as HTMLDivElement;
       if (legendDiv) {
         import('html2canvas').then(({ default: html2canvas }) => {
-          html2canvas(legendDiv).then((legendCanvas: HTMLCanvasElement) => {
-            // Create a new canvas to combine legend and graph
+          html2canvas(legendDiv, { backgroundColor: '#F8FAFC', scale: window.devicePixelRatio || 1 }).then((legendCanvas: HTMLCanvasElement) => {
+            // Set width to the max of both, but align both to the same width
+            const finalWidth = Math.max(canvas!.width, legendCanvas.width);
+            // If legend is narrower, pad it
+            let legendPadded = legendCanvas;
+            if (legendCanvas.width < finalWidth) {
+              legendPadded = document.createElement('canvas');
+              legendPadded.width = finalWidth;
+              legendPadded.height = legendCanvas.height;
+              const lctx = legendPadded.getContext('2d');
+              if (lctx) {
+                lctx.fillStyle = '#F8FAFC';
+                lctx.fillRect(0, 0, finalWidth, legendCanvas.height);
+                lctx.drawImage(legendCanvas, 0, 0);
+              }
+            }
+            // If graph is narrower, pad it
+            let graphPadded = canvas!;
+            if (canvas!.width < finalWidth) {
+              graphPadded = document.createElement('canvas');
+              graphPadded.width = finalWidth;
+              graphPadded.height = canvas!.height;
+              const gctx = graphPadded.getContext('2d');
+              if (gctx) {
+                gctx.fillStyle = '#F8FAFC';
+                gctx.fillRect(0, 0, finalWidth, canvas!.height);
+                gctx.drawImage(canvas!, 0, 0);
+              }
+            }
+            // Combine
             const combinedCanvas = document.createElement('canvas');
-            combinedCanvas.width = Math.max(canvas!.width, legendCanvas.width);
-            combinedCanvas.height = canvas!.height + legendCanvas.height;
+            combinedCanvas.width = finalWidth;
+            combinedCanvas.height = legendPadded.height + graphPadded.height;
             const ctx = combinedCanvas.getContext('2d');
             if (ctx) {
-              ctx.fillStyle = '#F8FAFC'; // pastel-light background
+              ctx.fillStyle = '#F8FAFC';
               ctx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
-              ctx.drawImage(legendCanvas, 0, 0);
-              ctx.drawImage(canvas!, 0, legendCanvas.height);
+              ctx.drawImage(legendPadded, 0, 0);
+              ctx.drawImage(graphPadded, 0, legendPadded.height);
               const link = document.createElement('a');
               link.href = combinedCanvas.toDataURL('image/png');
               link.download = 'graph_with_legend.png';
@@ -240,10 +269,14 @@ export default function NoteGraphPage() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
                   </Button>
                 </div>
-                <div className="bg-pastel-light rounded-lg flex-1 min-h-[400px]" ref={containerRef}>
+                <div
+                  className="bg-pastel-light rounded-lg flex-1 w-full relative overflow-hidden"
+                  ref={containerRef}
+                  style={{ maxWidth: '100%' }}
+                >
                   {/* Relationship Legend */}
                   {graphData.links.length > 0 && (
-                    <div className="graph-legend flex flex-wrap gap-2 p-2 text-xs text-pastel-secondary items-center">
+                    <div className="graph-legend flex flex-wrap gap-2 p-2 text-xs text-pastel-secondary items-center z-10 relative">
                       <span className="font-semibold">Legend:</span>
                       {Array.from(new Set(graphData.links.map((l: any) => l.type))).map((type: string) => {
                         // Find a sample link of this type
@@ -285,45 +318,49 @@ export default function NoteGraphPage() {
                       </div>
                     </div>
                   ) : (
-                    <ForceGraph2D
-                      ref={graphRef}
-                      graphData={graphData}
-                      nodeLabel="name"
-                      nodeColor={(node: any) => node.color || "#666"}
-                      nodeCanvasObject={(node: any, ctx: any, globalScale: number) => {
-                        const isCurrentNote = node.noteId === noteId;
-                        // Make nodes smaller: 8px for current note, 5px for others
-                        const size = isCurrentNote ? 8 : 5;
-                        const fontSize = 10 / globalScale;
+                    <div
+                      className="absolute inset-0 w-full h-full"
+                      style={{ pointerEvents: 'auto' }}
+                    >
+                      <ForceGraph2D
+                        ref={graphRef}
+                        graphData={graphData}
+                        nodeLabel="name"
+                        nodeColor={(node: any) => node.color || "#666"}
+                        nodeCanvasObject={(node: any, ctx: any, globalScale: number) => {
+                          const isCurrentNote = node.noteId === noteId;
+                          const size = isCurrentNote ? 8 : 5;
+                          const fontSize = 10 / globalScale;
 
-                        // Draw node circle
-                        ctx.beginPath();
-                        ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
-                        ctx.fillStyle = node.color || "#666";
-                        ctx.fill();
+                          // Draw node circle
+                          ctx.beginPath();
+                          ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
+                          ctx.fillStyle = node.color || "#666";
+                          ctx.fill();
 
-                        if (isCurrentNote) {
-                          ctx.strokeStyle = "#000";
-                          ctx.lineWidth = 1.5;
-                          ctx.stroke();
-                        }
+                          if (isCurrentNote) {
+                            ctx.strokeStyle = "#000";
+                            ctx.lineWidth = 1.5;
+                            ctx.stroke();
+                          }
 
-                        // Draw node label
-                        const label = node.name || node.id;
-                        if (label) {
-                          ctx.font = `${fontSize}px Sans-Serif`;
-                          ctx.fillStyle = "black";
-                          ctx.textAlign = "center";
-                          ctx.fillText(label, node.x, node.y + size + fontSize);
-                        }
-                      }}
-                      linkDirectionalParticles={2}
-                      linkDirectionalParticleSpeed={0.005}
-                      linkColor={() => "#999"}
-                      onNodeClick={(node: any) => setSelectedNode(node)}
-                      width={dimensions.width}
-                      height={dimensions.height}
-                    />
+                          // Draw node label
+                          const label = node.name || node.id;
+                          if (label) {
+                            ctx.font = `${fontSize}px Sans-Serif`;
+                            ctx.fillStyle = "black";
+                            ctx.textAlign = "center";
+                            ctx.fillText(label, node.x, node.y + size + fontSize);
+                          }
+                        }}
+                        linkDirectionalParticles={2}
+                        linkDirectionalParticleSpeed={0.005}
+                        linkColor={() => "#999"}
+                        onNodeClick={(node: any) => setSelectedNode(node)}
+                        width={dimensions.width}
+                        height={dimensions.height}
+                      />
+                    </div>
                   )}
                 </div>
               </CardContent>
