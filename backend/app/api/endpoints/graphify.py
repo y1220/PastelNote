@@ -77,6 +77,7 @@ async def graphify_note(request: GraphifyRequest):
         session.run(
             """
             MATCH (n:GraphNode {noteId: $noteId})
+            OPTIONAL MATCH (note)-[r1]-(connected:GraphNode)
             OPTIONAL MATCH (n)-[r]-()
             DELETE r, n
             """,

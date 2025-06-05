@@ -30,32 +30,56 @@ function formatGraphResults(records: any[]) {
         ...item.properties
       });
     }
-  };      const addRelationship = (item: any) => {
-        if (item && item.type && item.startNode && item.endNode) {
-          relationships.push({
-            id: item.identity.toString(),
-            source: item.startNode.identity.toString(),
-            target: item.endNode.identity.toString(),
-            type: item.type,
-            ...item.properties
-          });
-        } else {
-          logger.warn(`Invalid relationship structure: ${JSON.stringify(item, null, 2)}`);
-        }
-      };
+  };
+  const tempRelationships: any[] = [];
+  const addRelationship = (item: any) => {
+    if (item && item.type && item.start && item.end) {
+      tempRelationships.push({
+        id: item.identity.toString(),
+        source: item.start.toString(),
+        target: item.end.toString(),
+        type: item.type,
+        ...item.properties
+      });
+    } else {
+      logger.warn(`Invalid relationship structure: ${JSON.stringify(item, null, 2)}`);
+    }
+  };
 
   records.forEach((record) => {
-    // Process all keys in the record that might contain nodes or relationships
     record.keys.forEach((key: any) => {
       const item = record.get(key);
       if (key === 'note' || key === 'connected' || key === 'secondDegree' || key === 'n' || key === 'm') {
         addNode(item);
       }
-      if (key === 'r' || key === 'r1' || key === 'r2') {
-        addRelationship(item);
-      }
     });
+
+    // Relationship extraction:
+    if (record.has('r') || record.has('r1')) {
+      const rel = record.get('r') || record.get('r1');
+      const sourceId = record.get('sourceId');
+      const targetId = record.get('targetId');
+      if (rel && sourceId && targetId) {
+        relationships.push({
+          id: rel.identity.toString(),
+          source: sourceId,
+          target: targetId,
+          type: rel.type,
+          ...rel.properties
+        });
+      }
+    }
   });
+
+  // Only include relationships where both source and target are present in nodes
+  const nodeIds = new Set(nodes.map(n => n.id));
+  tempRelationships.forEach(rel => {
+    if (nodeIds.has(rel.source) && nodeIds.has(rel.target)) {
+      relationships.push(rel);
+    }
+  });
+
+  logger.info("Extracted relationships: " + JSON.stringify(tempRelationships, null, 2));
 
   return { nodes, relationships };
 }
@@ -72,11 +96,9 @@ export async function GET(req: Request) {
       const result = await session.run(
         noteId
           ? `
-            MATCH (note:GraphNode {noteId: $noteId})
-            OPTIONAL MATCH (note)-[r1:RELATED|MENTIONS|REFERS_TO|IS_A]-(connected:GraphNode)
-            OPTIONAL MATCH (connected)-[r2:RELATED|MENTIONS|REFERS_TO|IS_A]-(secondDegree:GraphNode)
-            WHERE secondDegree <> note
-            RETURN note, r1, connected, r2, secondDegree
+            MATCH (n:GraphNode {noteId: $noteId})
+            OPTIONAL MATCH (n)-[r]->(m:GraphNode)
+            RETURN n, r, m
           `
           : `
             MATCH (n:GraphNode)-[r]->(m:GraphNode)
@@ -84,6 +106,8 @@ export async function GET(req: Request) {
           `,
         noteId ? { noteId } : {}
       );
+
+      logger.info("Raw Neo4j records: " + JSON.stringify(result.records, null, 2));
 
       const graphData = formatGraphResults(result.records);
       logger.info(`Neo4j query returned ${graphData.nodes.length} nodes and ${graphData.relationships.length} relationships`);
