@@ -159,10 +159,34 @@ export default function NoteGraphPage() {
       }
     }
     if (canvas && canvas.toDataURL) {
-      const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/png");
-      link.download = "graph.png";
-      link.click();
+      const legendDiv = containerRef.current?.querySelector('.graph-legend') as HTMLDivElement;
+      if (legendDiv) {
+        import('html2canvas').then(({ default: html2canvas }) => {
+          html2canvas(legendDiv).then((legendCanvas: HTMLCanvasElement) => {
+            // Create a new canvas to combine legend and graph
+            const combinedCanvas = document.createElement('canvas');
+            combinedCanvas.width = Math.max(canvas!.width, legendCanvas.width);
+            combinedCanvas.height = canvas!.height + legendCanvas.height;
+            const ctx = combinedCanvas.getContext('2d');
+            if (ctx) {
+              ctx.fillStyle = '#F8FAFC'; // pastel-light background
+              ctx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
+              ctx.drawImage(legendCanvas, 0, 0);
+              ctx.drawImage(canvas!, 0, legendCanvas.height);
+              const link = document.createElement('a');
+              link.href = combinedCanvas.toDataURL('image/png');
+              link.download = 'graph_with_legend.png';
+              link.click();
+            }
+          });
+        });
+      } else {
+        // fallback: just download the graph
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = 'graph.png';
+        link.click();
+      }
     }
   }
 
@@ -219,7 +243,7 @@ export default function NoteGraphPage() {
                 <div className="bg-pastel-light rounded-lg flex-1 min-h-[400px]" ref={containerRef}>
                   {/* Relationship Legend */}
                   {graphData.links.length > 0 && (
-                    <div className="flex flex-wrap gap-2 p-2 text-xs text-pastel-secondary items-center">
+                    <div className="graph-legend flex flex-wrap gap-2 p-2 text-xs text-pastel-secondary items-center">
                       <span className="font-semibold">Legend:</span>
                       {Array.from(new Set(graphData.links.map((l: any) => l.type))).map((type: string) => {
                         // Find a sample link of this type
