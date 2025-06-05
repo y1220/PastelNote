@@ -243,8 +243,9 @@ export default function NoteGraphPage() {
                       nodeColor={(node: any) => node.color || "#666"}
                       nodeCanvasObject={(node: any, ctx: any, globalScale: number) => {
                         const isCurrentNote = node.noteId === noteId;
-                        const size = isCurrentNote ? 12 : 8;
-                        const fontSize = 12 / globalScale;
+                        // Make nodes smaller: 8px for current note, 5px for others
+                        const size = isCurrentNote ? 8 : 5;
+                        const fontSize = 10 / globalScale;
 
                         // Draw node circle
                         ctx.beginPath();
@@ -254,7 +255,7 @@ export default function NoteGraphPage() {
 
                         if (isCurrentNote) {
                           ctx.strokeStyle = "#000";
-                          ctx.lineWidth = 2;
+                          ctx.lineWidth = 1.5;
                           ctx.stroke();
                         }
 
