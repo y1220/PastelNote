@@ -73,18 +73,10 @@ export async function GET(req: Request) {
         noteId
           ? `
             MATCH (note:GraphNode {noteId: $noteId})
-            WITH note
             OPTIONAL MATCH (note)-[r1:RELATED|MENTIONS|REFERS_TO|IS_A]-(connected:GraphNode)
-            WITH DISTINCT note, r1, connected
             OPTIONAL MATCH (connected)-[r2:RELATED|MENTIONS|REFERS_TO|IS_A]-(secondDegree:GraphNode)
             WHERE secondDegree <> note
-            WITH DISTINCT note, r1, connected, r2, secondDegree
-            RETURN
-              note as rootNode,
-              collect(DISTINCT r1) as directRelationships,
-              collect(DISTINCT connected) as connectedNodes,
-              collect(DISTINCT r2) as indirectRelationships,
-              collect(DISTINCT secondDegree) as indirectNodes
+            RETURN note, r1, connected, r2, secondDegree
           `
           : `
             MATCH (n:GraphNode)-[r]->(m:GraphNode)

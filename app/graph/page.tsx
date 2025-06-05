@@ -226,7 +226,7 @@ export default function GraphPage() {
                   </Button>
                 </div>
 
-                <div className="bg-pastel-light rounded-lg h-[700px]">
+                <div className="bg-pastel-light rounded-lg min-h-[600px] min-w-[700px] h-[700px] w-full" style={{height: 700, minHeight: 600, minWidth: 700}}>
                   {isLoading ? (
                     <div className="h-full flex items-center justify-center">
                       <div className="text-center">
@@ -246,7 +246,7 @@ export default function GraphPage() {
                         linkDirectionalArrowRelPos={1}
                         linkCurvature={0.25}
                         height={700}
-                        width={900}
+                        width={Math.max(900, window.innerWidth * 0.7)}
                         onNodeClick={(node) => setSelectedNode(node)}
                         nodeCanvasObject={(node, ctx, globalScale) => {
                           if (typeof node.x !== 'number' || typeof node.y !== 'number') return;

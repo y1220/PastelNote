@@ -112,7 +112,7 @@ export default function NoteGraphPage() {
 
         setStats({
           noteCount,
-          conceptCount,
+          conceptCount: conceptCount,
           relationshipCount: links.length
         })
         setIsLoading(false)
@@ -177,12 +177,12 @@ export default function NoteGraphPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="md:col-span-3">
-            <Card className="bg-white h-[800px]">
+            <Card className="bg-white h-full flex flex-col">
               <CardHeader className="pb-2">
                 <CardTitle className="text-pastel-primary">Note Connections</CardTitle>
                 <CardDescription>Explore relationships with other notes and concepts</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-1 flex flex-col">
                 <div className="flex justify-end gap-2 mb-4">
                   <Button variant="outline" size="icon" onClick={handleZoomIn}>
                     <ZoomIn className="h-4 w-4" />
@@ -194,7 +194,7 @@ export default function NoteGraphPage() {
                     <Maximize className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="bg-pastel-light rounded-lg h-[700px]" ref={containerRef}>
+                <div className="bg-pastel-light rounded-lg flex-1 min-h-[400px]" ref={containerRef}>
                   {isLoading ? (
                     <div className="h-full flex items-center justify-center">
                       <div className="text-center">

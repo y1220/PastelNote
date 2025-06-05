@@ -80,7 +80,7 @@ async def graphify_note(request: GraphifyRequest):
             )
         for rel in graph_json["relationships"]:
             session.run(
-                "MATCH (a:GraphNode {id: $source}), (b:GraphNode {id: $target}) MERGE (a)-[r:RELATED {type: $type}]->(b)",
+                "MATCH (a:GraphNode {id: $source}) MATCH (b:GraphNode {id: $target}) MERGE (a)-[r:RELATED {type: $type}]->(b)",
                 source=rel["source"], target=rel["target"], type=rel["type"]
             )
     return {"status": "success", "graph": graph_json}
