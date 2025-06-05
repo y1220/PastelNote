@@ -217,6 +217,31 @@ export default function NoteGraphPage() {
                   </Button>
                 </div>
                 <div className="bg-pastel-light rounded-lg flex-1 min-h-[400px]" ref={containerRef}>
+                  {/* Relationship Legend */}
+                  {graphData.links.length > 0 && (
+                    <div className="flex flex-wrap gap-2 p-2 text-xs text-pastel-secondary items-center">
+                      <span className="font-semibold">Legend:</span>
+                      {Array.from(new Set(graphData.links.map((l: any) => l.type))).map((type: string) => {
+                        // Find a sample link of this type
+                        const sample = graphData.links.find((l: any) => l.type === type) as any;
+                        // Try to find the source and target node names
+                        const sourceNode = graphData.nodes.find((n: any) => n.id === (sample && sample.source));
+                        const targetNode = graphData.nodes.find((n: any) => n.id === (sample && sample.target));
+                        return (
+                          <span key={type} className="px-2 py-1 rounded bg-pastel-primary/10 border border-pastel-primary/20 flex items-center gap-1">
+                            <span className="font-semibold">{type}</span>
+                            {sourceNode && targetNode && (
+                              <span className="text-pastel-secondary/80">(
+                                <span className="font-normal">{(sourceNode as any).name || (sourceNode as any).label}</span>
+                                <span className="mx-1">→</span>
+                                <span className="font-normal">{(targetNode as any).name || (targetNode as any).label}</span>
+                              )</span>
+                            )}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                   {isLoading ? (
                     <div className="h-full flex items-center justify-center">
                       <div className="text-center">
