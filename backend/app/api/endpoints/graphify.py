@@ -28,11 +28,17 @@ async def graphify_note(request: GraphifyRequest):
     {note.content}
     """
     async with httpx.AsyncClient() as client:
-        gemini_resp = await client.post(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + gemini_api_key,
-            json={"contents": [{"parts": [{"text": prompt}]}]}
-        )
-        gemini_data = gemini_resp.json()
+        try:
+            gemini_resp = await client.post(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + gemini_api_key,
+                json={"contents": [{"parts": [{"text": prompt}]}]},
+                timeout=60
+            )
+            gemini_data = gemini_resp.json()
+        except httpx.ReadTimeout:
+            raise HTTPException(status_code=504, detail="Gemini API timed out. Please try again later.")
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=502, detail=f"Error contacting Gemini API: {str(e)}")
         import logging
         logging.info(f"Gemini API response: {gemini_data}")
         if gemini_resp.status_code != 200 or "candidates" not in gemini_data:

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
 import dynamic from "next/dynamic"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ZoomIn, ZoomOut, Maximize, ArrowLeft } from "lucide-react"
@@ -362,6 +363,11 @@ export default function NoteGraphPage() {
                       />
                     </div>
                   )}
+                </div>
+                <div className="mt-8 flex justify-end">
+                  <Link href={{ pathname: "/graph/miro-board", query: { noteId } }}>
+                    <Button variant="outline">Open Miro Board</Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
