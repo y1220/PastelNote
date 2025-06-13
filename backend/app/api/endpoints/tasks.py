@@ -59,3 +59,8 @@ async def create_tasks_batch(tasks: list[TaskCreate], db=Depends(get_database)):
         created = await db["tasks"].find_one({"_id": result.inserted_id})
         created_tasks.append(task_from_mongo(created))
     return created_tasks
+
+@router.post("/remove-all", status_code=200)
+async def remove_all_tasks(db=Depends(get_database)):
+    result = await db["tasks"].delete_many({})
+    return {"deleted_count": result.deleted_count}
