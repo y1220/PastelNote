@@ -17,7 +17,10 @@ export default function RegisteredTasksPage() {
   const [editDescription, setEditDescription] = useState("");
   const [editStatus, setEditStatus] = useState("todo");
   const [editLoading, setEditLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'todo' | 'in-progress' | 'done'>('all');
   const router = useRouter();
+
+  const filteredTasks = statusFilter === 'all' ? tasks : tasks.filter(t => t.status === statusFilter);
 
   const fetchTasks = () => {
     setLoading(true);
@@ -76,22 +79,42 @@ export default function RegisteredTasksPage() {
             {loading ? (
               <div className="text-pastel-secondary text-center py-8">Loading tasks...</div>
             ) : (
-              <div className="flex flex-wrap gap-4">
-                {tasks.length === 0 && <div className="text-pastel-secondary text-sm">No registered tasks yet.</div>}
-                {tasks.map(task => (
-                  <div
-                    key={task.id || task._id}
-                    className="rounded shadow px-3 py-2 bg-white border border-pastel-primary/30 min-w-[180px] min-h-[90px] w-[180px] h-[90px] flex flex-col justify-between relative cursor-pointer hover:bg-pastel-primary/10"
-                    onClick={() => openEditDialog(task)}
-                  >
-                    <div>
-                      <div className="font-semibold mb-1">{task.title || task.name || task.id}</div>
-                      <div className="text-xs text-pastel-secondary mb-1">{task.status}</div>
-                      <div className="text-xs text-pastel-secondary mb-1">{task.description}</div>
+              <>
+                <div className="flex flex-wrap gap-4 mb-6">
+                  <Button
+                    variant={statusFilter === 'all' ? 'default' : 'outline'}
+                    onClick={() => setStatusFilter('all')}
+                  >All</Button>
+                  <Button
+                    variant={statusFilter === 'todo' ? 'default' : 'outline'}
+                    onClick={() => setStatusFilter('todo')}
+                  >To Do</Button>
+                  <Button
+                    variant={statusFilter === 'in-progress' ? 'default' : 'outline'}
+                    onClick={() => setStatusFilter('in-progress')}
+                  >In Progress</Button>
+                  <Button
+                    variant={statusFilter === 'done' ? 'default' : 'outline'}
+                    onClick={() => setStatusFilter('done')}
+                  >Done</Button>
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  {filteredTasks.length === 0 && <div className="text-pastel-secondary text-sm">No registered tasks yet.</div>}
+                  {filteredTasks.map(task => (
+                    <div
+                      key={task.id || task._id}
+                      className="rounded shadow px-3 py-2 bg-white border border-pastel-primary/30 min-w-[180px] min-h-[90px] w-[180px] h-[90px] flex flex-col justify-between relative cursor-pointer hover:bg-pastel-primary/10"
+                      onClick={() => openEditDialog(task)}
+                    >
+                      <div>
+                        <div className="font-semibold mb-1">{task.title || task.name || task.id}</div>
+                        <div className="text-xs text-pastel-secondary mb-1">{task.status}</div>
+                        <div className="text-xs text-pastel-secondary mb-1">{task.description}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
