@@ -22,14 +22,21 @@ export default function RegisteredTasksPage() {
   const fetchTasks = () => {
     setLoading(true);
     setError(null);
-    tasksApi.getAll()
-      .then(res => {
-        if (res.error) throw new Error(res.error);
-        setTasks(res.data || []);
-        setError(null);
-      })
-      .catch(e => setError(e.message || "Failed to load tasks."))
-      .finally(() => setLoading(false));
+    // Get noteId from query param
+    const urlParams = new URLSearchParams(window.location.search);
+    const noteId = urlParams.get('noteId');
+    const apiCall = noteId
+      ? tasksApi.getByNoteId(noteId).then(res => {
+          if (res.error) throw new Error(res.error);
+          setTasks(res.data || []);
+          setError(null);
+        })
+      : tasksApi.getAll().then(res => {
+          if (res.error) throw new Error(res.error);
+          setTasks(res.data || []);
+          setError(null);
+        });
+    apiCall.catch(e => setError(e.message || "Failed to load tasks.")).finally(() => setLoading(false));
   };
 
   const openEditDialog = (task: any) => {

@@ -81,7 +81,7 @@ export const tasksApi = {
   remove: (task: { note_id: string; task_id: string }) =>
     apiCall<any>('/tasks/remove', 'POST', task),
   getByNoteId: (note_id: string) =>
-    apiCall<any>(`/tasks/${note_id}`, 'GET'),
+    apiCall<any[]>(`/tasks?note_id=${encodeURIComponent(note_id)}`),
   // Add more task endpoints as needed (get, update, delete, etc.)
 }
 
