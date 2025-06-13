@@ -150,43 +150,27 @@ export default function RegisteredTasksPage() {
               <div className="text-pastel-secondary text-center py-8">Loading tasks...</div>
             ) : (
               <>
-                <div className="flex flex-wrap gap-4 mb-6">
-                  <Button
-                    variant="outline"
-                    onClick={() => setStatusFilter('all')}
-                    className={`border-2 ${
-                      statusFilter === 'all'
-                        ? 'bg-slate-100 border-slate-500 text-slate-700 font-medium'
-                        : 'border-slate-300 hover:border-slate-400 hover:bg-slate-50'
-                    }`}
-                  >All</Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setStatusFilter('todo')}
-                    className={`border-2 ${
-                      statusFilter === 'todo'
-                        ? 'bg-amber-100 border-amber-500 text-amber-700 font-medium'
-                        : 'border-amber-300 hover:border-amber-400 hover:bg-amber-50'
-                    }`}
-                  >To Do</Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setStatusFilter('in-progress')}
-                    className={`border-2 ${
-                      statusFilter === 'in-progress'
-                        ? 'bg-sky-100 border-sky-500 text-sky-700 font-medium'
-                        : 'border-sky-300 hover:border-sky-400 hover:bg-sky-50'
-                    }`}
-                  >In Progress</Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setStatusFilter('done')}
-                    className={`border-2 ${
-                      statusFilter === 'done'
-                        ? 'bg-emerald-100 border-emerald-500 text-emerald-700 font-medium'
-                        : 'border-emerald-300 hover:border-emerald-400 hover:bg-emerald-50'
-                    }`}
-                  >Done</Button>
+                <div className="grid grid-cols-4 gap-2 mb-6">
+                  {[
+                    { label: 'All', value: 'all', color: '#9CA3AF' },
+                    { label: 'To Do', value: 'todo', color: '#FBBF24' },
+                    { label: 'In Progress', value: 'in-progress', color: '#60A5FA' },
+                    { label: 'Done', value: 'done', color: '#34D399' }
+                  ].map(({ label, value, color }) => (
+                    <button
+                      key={value}
+                      onClick={() => setStatusFilter(value as any)}
+                      style={{
+                        backgroundColor: statusFilter === value ? color : 'white',
+                        borderColor: color,
+                        opacity: statusFilter === value ? 1 : 0.7,
+                        color: statusFilter === value ? 'white' : undefined
+                      }}
+                      className="h-14 rounded-md border-2 font-medium flex items-center justify-center hover:opacity-100 transition-all text-base w-full"
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
                 <div className="flex flex-col gap-3">
                     {filteredTasks.length === 0 && <div className="text-pastel-secondary text-sm">No registered tasks yet.</div>}
