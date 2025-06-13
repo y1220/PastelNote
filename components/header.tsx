@@ -10,76 +10,100 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <header className="bg-white shadow-sm dark:bg-gray-950">
-      <div className="container mx-auto px-4">
+    <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-white/20 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex items-center space-x-3">
             <Link href="/" className="flex items-center">
-              <BookOpen className="h-8 w-8 text-pastel-primary" />
-              <span className="ml-2 text-xl font-bold text-pastel-primary">Pastel Notes</span>
+              <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-rose-400 rounded-lg flex items-center justify-center shadow-lg">
+                <BookOpen className="h-4 w-4 text-white" />
+              </div>
+              <span className="ml-2 text-xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
+                Pastel Notes
+              </span>
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-4">
-            <Link
-              href="/notes"
-              className="text-pastel-secondary hover:text-pastel-primary px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Notes
+          <nav className="hidden md:flex items-center space-x-1">
+            <Link href="/notes">
+              <Button
+                variant="ghost"
+                className="text-gray-600 transition-colors duration-200 hover:text-pink-600 hover:bg-pink-50/80 active:bg-pink-50"
+              >
+                Notes
+              </Button>
             </Link>
-            <Link
-              href="/graph"
-              className="text-pastel-secondary hover:text-pastel-primary px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Graph
+            <Link href="/graph">
+              <Button
+                variant="ghost"
+                className="text-gray-600 transition-colors duration-200 hover:text-purple-600 hover:bg-purple-50/80 active:bg-purple-50"
+              >
+                Graph
+              </Button>
             </Link>
-            <Link
-              href="/ai-assistant"
-              className="text-pastel-secondary hover:text-pastel-primary px-3 py-2 rounded-md text-sm font-medium"
-            >
-              AI Assistant
+            <Link href="/ai-assistant">
+              <Button
+                variant="ghost"
+                className="text-gray-600 transition-colors duration-200 hover:text-indigo-600 hover:bg-indigo-50/80 active:bg-indigo-50"
+              >
+                AI Assistant
+              </Button>
             </Link>
             <ModeToggle />
-            <Button variant="outline" className="ml-4">
+            <Button
+              variant="outline"
+              className="ml-4 border-gray-200 transition-all duration-200 hover:border-pink-300 hover:bg-pink-50 hover:text-pink-600"
+            >
               <User className="h-4 w-4 mr-2" />
               Sign In
             </Button>
           </nav>
 
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center space-x-3">
             <ModeToggle />
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-pastel-secondary hover:text-pastel-primary focus:outline-none"
+              className="text-gray-500 transition-all duration-200 hover:text-gray-700"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+              {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </Button>
           </div>
         </div>
       </div>
 
       {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link
-              href="/notes"
-              className="text-pastel-secondary hover:text-pastel-primary block px-3 py-2 rounded-md text-base font-medium"
-            >
-              Notes
+        <div className="md:hidden bg-white/95 backdrop-blur-sm border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-1">
+            <Link href="/notes" className="block w-full">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-gray-600 transition-colors duration-200 hover:text-pink-600 hover:bg-pink-50/80 active:bg-pink-50"
+              >
+                Notes
+              </Button>
             </Link>
-            <Link
-              href="/graph"
-              className="text-pastel-secondary hover:text-pastel-primary block px-3 py-2 rounded-md text-base font-medium"
-            >
-              Graph
+            <Link href="/graph" className="block w-full">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-gray-600 transition-colors duration-200 hover:text-purple-600 hover:bg-purple-50/80 active:bg-purple-50"
+              >
+                Graph
+              </Button>
             </Link>
-            <Link
-              href="/ai-assistant"
-              className="text-pastel-secondary hover:text-pastel-primary block px-3 py-2 rounded-md text-base font-medium"
-            >
-              AI Assistant
+            <Link href="/ai-assistant" className="block w-full">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-gray-600 transition-colors duration-200 hover:text-indigo-600 hover:bg-indigo-50/80 active:bg-indigo-50"
+              >
+                AI Assistant
+              </Button>
             </Link>
-            <Button variant="outline" className="w-full mt-2">
+            <Button
+              variant="outline"
+              className="w-full mt-4 border-gray-200 transition-all duration-200 hover:border-pink-300 hover:bg-pink-50 hover:text-pink-600 shadow-sm"
+            >
               <User className="h-4 w-4 mr-2" />
               Sign In
             </Button>

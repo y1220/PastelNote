@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Tag, Network, Sparkles } from "lucide-react"
+import { Clock, Tag, Network, Sparkles, CheckSquare } from "lucide-react"
 import { notesApi } from "@/lib/api"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -166,14 +166,15 @@ export function NotesList() {
                   <Sparkles className="h-4 w-4 mr-2" />
                   AI Insights
                 </Button>
-                <a
-                  href={`/graph/registered-tasks?noteId=${note.id || note._id}`}
-                  className="inline-flex items-center px-3 py-1 text-sm font-medium rounded border border-pastel-secondary text-pastel-secondary hover:bg-pastel-light transition-colors ml-2"
-                  style={{ textDecoration: 'none' }}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-pastel-secondary"
+                  onClick={() => window.location.href = `/graph/registered-tasks?noteId=${note.id || note._id}`}
                 >
-                  <span className="mr-2">See Tasks</span>
-                  <span role="img" aria-label="tasks">📝</span>
-                </a>
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  See Tasks
+                </Button>
               </div>
               <Button variant="outline" size="sm" className="text-pastel-secondary" onClick={() => openEditModal(note)}>
                 Edit
