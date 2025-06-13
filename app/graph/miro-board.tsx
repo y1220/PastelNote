@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { registeredTasksApi, tasksApi } from "@/lib/api"
+import { tasksApi } from "@/lib/api"
 import { CreateTaskButton } from "@/components/create-task-button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
@@ -13,6 +13,9 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
 export default function MiroBoardPage({ graphData: initialGraphData }: { graphData?: { nodes: any[] } }) {
+  const searchParams = useSearchParams();
+  const noteId = searchParams.get("noteId");
+
   // If graphData is not passed as prop, fetch from API (global graph)
   const [graphData, setGraphData] = useState<{ nodes: any[] }>({ nodes: [] })
   const [checked, setChecked] = useState<{ [id: string]: boolean }>({})
@@ -26,25 +29,24 @@ export default function MiroBoardPage({ graphData: initialGraphData }: { graphDa
   const router = useRouter()
 
   useEffect(() => {
-    if (initialGraphData) {
-      setGraphData(initialGraphData)
-    } else {
-      setLoading(true)
-      fetch("/api/neo4j")
-        .then(res => {
-          if (!res.ok) throw new Error("Failed to fetch tasks. Please try again later.")
-          return res.json()
-        })
-        .then(data => {
-          setGraphData({ nodes: data.nodes || [] })
-          setError(null)
-        })
-        .catch(e => {
-          setError(e.message || "Failed to load tasks.")
-        })
-        .finally(() => setLoading(false))
-    }
-  }, [initialGraphData])
+    setLoading(true);
+    setError(null);
+    // If noteId is present, fetch note-specific graph, else global
+    const url = noteId ? `/api/neo4j?noteId=${noteId}` : "/api/neo4j";
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch tasks. Please try again later.");
+        return res.json();
+      })
+      .then(data => {
+        setGraphData({ nodes: data.nodes || [] });
+        setError(null);
+      })
+      .catch(e => {
+        setError(e.message || "Failed to load tasks.");
+      })
+      .finally(() => setLoading(false));
+  }, [noteId, initialGraphData]);
 
   // Keep checked/registered/statuses in sync with graphData
   useEffect(() => {
@@ -95,6 +97,7 @@ export default function MiroBoardPage({ graphData: initialGraphData }: { graphDa
           title: task.name,
           description: task.description,
           status: task.status,
+          note_id: noteId || undefined,
         });
       }
       setShowTaskEditDialog(false);
@@ -104,6 +107,8 @@ export default function MiroBoardPage({ graphData: initialGraphData }: { graphDa
         return next;
       });
       setError(null);
+      // Redirect to registered tasks page after creation
+      router.push("/graph/registered-tasks");
     } catch (e: any) {
       setError(e.message || "Failed to create tasks.");
     } finally {
@@ -140,29 +145,57 @@ export default function MiroBoardPage({ graphData: initialGraphData }: { graphDa
               <>
                 <div className="mb-6">
                   <h2 className="font-bold text-lg mb-2">Task List</h2>
-                  <CreateTaskButton onTaskCreated={() => {/* Optionally refresh tasks here */}} />
-                  <ul className="space-y-2">
-                    {graphData.nodes.map(node => (
-                      <li key={node.id} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={checked[node.id] || false}
-                          onChange={() => handleCheck(node.id)}
-                          className="accent-pastel-primary"
-                        />
-                        <span className="font-medium">{node.name || node.label || node.id}</span>
-                        <span className="text-xs text-pastel-secondary ml-2">{node.type}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {Object.values(checked).some(Boolean) && (
-                    <Button
-                      className="mt-4"
-                      onClick={handleRegisterAll}
-                      disabled={registering}
+                  <CreateTaskButton noteId={noteId} onTaskCreated={() => {/* Optionally refresh tasks here */}} />
+                  {/* Show Neo4j node labels with checkboxes */}
+                  {graphData.nodes && graphData.nodes.length > 0 && (
+                    <form
+                      onSubmit={async e => {
+                        e.preventDefault();
+                        setRegistering(true);
+                        try {
+                          for (const node of graphData.nodes) {
+                            if (checked[node.id]) {
+                              await tasksApi.create({
+                                title: node.label || node.name || node.id,
+                                description: node.type || '',
+                                status: 'todo',
+                                note_id: noteId || undefined,
+                              });
+                            }
+                          }
+                          setChecked({});
+                          setError(null);
+                          router.push("/graph/registered-tasks");
+                        } catch (e: any) {
+                          setError(e.message || "Failed to create tasks.");
+                        } finally {
+                          setRegistering(false);
+                        }
+                      }}
+                      className="mt-4 space-y-1"
                     >
-                      {registering ? "Registering..." : "Register Selected Tasks"}
-                    </Button>
+                      {graphData.nodes.map(node => (
+                        <label key={node.id} className="flex items-center gap-2 text-pastel-secondary text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checked[node.id] || false}
+                            onChange={() => setChecked(c => ({ ...c, [node.id]: !c[node.id] }))}
+                            className="accent-pastel-primary"
+                          />
+                          <span className="font-semibold text-pastel-primary">{node.label || node.name || node.id}</span>
+                          {node.type && <span className="ml-2 text-xs">[{node.type}]</span>}
+                        </label>
+                      ))}
+                      {Object.values(checked).some(Boolean) && (
+                        <Button
+                          type="submit"
+                          className="mt-4"
+                          disabled={registering}
+                        >
+                          {registering ? "Registering..." : "Register Selected Tasks"}
+                        </Button>
+                      )}
+                    </form>
                   )}
                 </div>
                 <div>
@@ -257,7 +290,7 @@ export default function MiroBoardPage({ graphData: initialGraphData }: { graphDa
                       Cancel
                     </Button>
                     <Button type="button" className="bg-pastel-primary hover:bg-pastel-primary/90" onClick={handleSaveEditedTasks} disabled={registering}>
-                      {registering ? "Saving..." : "Save All Tasks"}
+                      {registering ? "Saving..." : "Complete Task Creation"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

@@ -1,5 +1,6 @@
 import { NotesList } from "@/components/notes-list"
 import { CreateNoteButton } from "@/components/create-note-button"
+import Link from "next/link"
 
 export default function NotesPage() {
   return (

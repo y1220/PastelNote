@@ -151,7 +151,7 @@ export function NotesList() {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between gap-2">
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <Button
                   variant="outline"
                   size="sm"
@@ -166,6 +166,14 @@ export function NotesList() {
                   <Sparkles className="h-4 w-4 mr-2" />
                   AI Insights
                 </Button>
+                <a
+                  href={`/graph/registered-tasks?noteId=${note.id || note._id}`}
+                  className="inline-flex items-center px-3 py-1 text-sm font-medium rounded border border-pastel-secondary text-pastel-secondary hover:bg-pastel-light transition-colors ml-2"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <span className="mr-2">See Tasks</span>
+                  <span role="img" aria-label="tasks">📝</span>
+                </a>
               </div>
               <Button variant="outline" size="sm" className="text-pastel-secondary" onClick={() => openEditModal(note)}>
                 Edit

@@ -1,7 +1,7 @@
 // lib/api.ts
 import logger from './logger';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000/api';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 // Type definitions for API responses
 interface ApiResponse<T> {
@@ -71,27 +71,21 @@ export const notesApi = {
   graphify: (id: string) => apiCall<any>(`/graphify-note`, 'POST', { note_id: id }),
 };
 
-// Registered Tasks API
-export const registeredTasksApi = {
-  register: (task: { note_id: string; task_id: string; status: string }) =>
-    apiCall<any>('/registered-tasks/register-task', 'POST', task),
-  registerBatch: (tasks: { note_id: string; task_id: string; status: string }[]) =>
-    apiCall<any>('/registered-tasks/register-tasks-batch', 'POST', { tasks }),
-  remove: (task: { note_id: string; task_id: string }) =>
-    apiCall<any>('/registered-tasks/remove-task', 'POST', task),
-  getByNoteId: (note_id: string) =>
-    apiCall<any>(`/registered-tasks/${note_id}`, 'GET'),
-}
-
 // Tasks API
 export const tasksApi = {
-  create: (task: { title: string; description: string; status: string }) =>
+  create: (task: { title: string; description: string; status: string; note_id?: string }) =>
     apiCall<any>('/tasks', 'POST', task),
+  getAll: () => apiCall<any[]>('/tasks'),
+  batch: (tasks: { note_id: string; task_id: string; status: string }[]) =>
+    apiCall<any>('/tasks/batch', 'POST', { tasks }),
+  remove: (task: { note_id: string; task_id: string }) =>
+    apiCall<any>('/tasks/remove', 'POST', task),
+  getByNoteId: (note_id: string) =>
+    apiCall<any>(`/tasks/${note_id}`, 'GET'),
   // Add more task endpoints as needed (get, update, delete, etc.)
 }
 
 export default {
   notesApi,
-  registeredTasksApi,
   tasksApi,
 };

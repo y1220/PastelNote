@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { tasksApi } from "@/lib/api"
 
-export function CreateTaskButton({ onTaskCreated }: { onTaskCreated?: () => void } = {}) {
+export function CreateTaskButton({ onTaskCreated, noteId }: { onTaskCreated?: () => void, noteId?: string | null } = {}) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -35,6 +35,7 @@ export function CreateTaskButton({ onTaskCreated }: { onTaskCreated?: () => void
         title,
         description,
         status,
+        note_id: noteId || undefined,
       })
       if (response.error) {
         setError(response.error)
