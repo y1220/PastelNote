@@ -19,56 +19,113 @@ function formatGraphResults(records: any[]) {
   const relationships: any[] = [];
   const nodeMap = new Map();
 
+  const addNode = (item: any) => {
+    if (item && item.identity && item.labels && !nodeMap.has(item.identity.toString())) {
+      nodeMap.set(item.identity.toString(), true);
+      nodes.push({
+        id: item.identity.toString(),
+        label: item.properties.name || item.properties.title ||
+              (item.labels.length > 0 ? item.labels[0] : "Node"),
+        type: item.labels.length > 0 ? item.labels[0].toLowerCase() : "node",
+        ...item.properties
+      });
+    }
+  };
+  const tempRelationships: any[] = [];
+  const addRelationship = (item: any) => {
+    if (item && item.type && item.start && item.end) {
+      tempRelationships.push({
+        id: item.identity.toString(),
+        source: item.start.toString(),
+        target: item.end.toString(),
+        type: item.type,
+        ...item.properties
+      });
+    } else {
+      logger.warn(`Invalid relationship structure: ${JSON.stringify(item, null, 2)}`);
+    }
+  };
+
   records.forEach((record) => {
-    // Process all keys in the record that might contain nodes
     record.keys.forEach((key: any) => {
       const item = record.get(key);
-      // Check if the item is a node
-      if (item && item.identity && item.labels) {
-        if (!nodeMap.has(item.identity.toString())) {
-          nodeMap.set(item.identity.toString(), true);
-          nodes.push({
-            id: item.identity.toString(),
-            // Make sure we have a reasonable label even if name/title is missing
-            label: item.properties.name || item.properties.title ||
-                  (item.labels.length > 0 ? item.labels[0] : "Node"),
-            // Get the first label or default to "node"
-            type: item.labels.length > 0 ? item.labels[0].toLowerCase() : "node",
-            ...item.properties
-          });
-        }
-      }
-
-      // Check if the item is a relationship
-      if (item && item.type && item.start && item.end) {
-        relationships.push({
-          id: item.identity.toString(),
-          source: item.start.toString(),
-          target: item.end.toString(),
-          type: item.type,
-          ...item.properties
-        });
+      if (key === 'note' || key === 'connected' || key === 'secondDegree' || key === 'n' || key === 'm' || key === 'a' || key === 'b') {
+        addNode(item);
       }
     });
+
+    // Relationship extraction:
+    if (record.has('r')) {
+      const rel = record.get('r');
+      const sourceId = record.get('sourceId');
+      const targetId = record.get('targetId');
+      if (rel && sourceId && targetId) {
+        relationships.push({
+          id: rel.identity.toString(),
+          source: sourceId,
+          target: targetId,
+          type: rel.type,
+          ...rel.properties
+        });
+      }
+    }
   });
+
+  // Only include relationships where both source and target are present in nodes
+  const nodeIds = new Set(nodes.map(n => n.id));
+  tempRelationships.forEach(rel => {
+    if (nodeIds.has(rel.source) && nodeIds.has(rel.target)) {
+      relationships.push(rel);
+    }
+  });
+
+  logger.info("Extracted relationships: " + JSON.stringify(tempRelationships, null, 2));
 
   return { nodes, relationships };
 }
 
-export async function GET() {
-  // Use mock data if Neo4j connection fails
+export async function GET(req: Request) {
   try {
-    logger.info('Neo4j GET request received');
+    const { searchParams } = new URL(req.url);
+    const noteId = searchParams.get('noteId');
+
+    logger.info(`Neo4j GET request received${noteId ? ` for noteId: ${noteId}` : ''}`);
     const session = driver.session();
     try {
-      // Query to get all nodes and relationships
-      const result = await session.run(`
-        MATCH (n)-[r]->(m)
-        RETURN n, r, m
-      `);
+      // Query to get nodes and relationships, filtered by noteId if provided
+      const result = await session.run(
+        noteId
+          ? `
+            MATCH (a:GraphNode)
+            WHERE a.noteId = $noteId
+            OPTIONAL MATCH (a)-[r]->(b:GraphNode)
+            RETURN a, r, b, a.id as sourceId, b.id as targetId
+          `
+          : `
+            MATCH (n:GraphNode)-[r]->(m:GraphNode)
+            RETURN n, r, m
+          `,
+        noteId ? { noteId } : {}
+      );
+
+      logger.info("Raw Neo4j records: " + JSON.stringify(result.records, null, 2));
 
       const graphData = formatGraphResults(result.records);
       logger.info(`Neo4j query returned ${graphData.nodes.length} nodes and ${graphData.relationships.length} relationships`);
+
+      // Debug logging
+      const debugInfo = {
+        params: { noteId },
+        nodeTypes: graphData.nodes.map((n: any) => n.type),
+        nodeSample: graphData.nodes[0],
+        relationshipSample: graphData.relationships[0]
+      };
+      logger.info(`Graph debug info: ${JSON.stringify(debugInfo, null, 2)}`);
+
+      if (graphData.nodes.length === 0) {
+        logger.warn(`No nodes found${noteId ? ` for noteId: ${noteId}` : ''}`);
+      }
+
       return NextResponse.json(graphData);
     } finally {
       await session.close();

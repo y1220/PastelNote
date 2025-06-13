@@ -1,7 +1,7 @@
 // lib/api.ts
 import logger from './logger';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000/api';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 // Type definitions for API responses
 interface ApiResponse<T> {
@@ -68,8 +68,24 @@ export const notesApi = {
   update: (id: number, note: any) => apiCall<any>(`/notes/${id}`, 'PUT', note),
   delete: (id: number) => apiCall<any>(`/notes/${id}`, 'DELETE'),
   search: (query: string) => apiCall<any[]>(`/notes/search?query=${encodeURIComponent(query)}`),
+  graphify: (id: string) => apiCall<any>(`/graphify-note`, 'POST', { note_id: id }),
 };
+
+// Tasks API
+export const tasksApi = {
+  create: (task: { title: string; description: string; status: string; note_id?: string }) =>
+    apiCall<any>('/tasks', 'POST', task),
+  getAll: () => apiCall<any[]>('/tasks'),
+  batch: (tasks: { note_id: string; task_id: string; status: string }[]) =>
+    apiCall<any>('/tasks/batch', 'POST', { tasks }),
+  remove: (task: { note_id: string; task_id: string }) =>
+    apiCall<any>('/tasks/remove', 'POST', task),
+  getByNoteId: (note_id: string) =>
+    apiCall<any[]>(`/tasks?note_id=${encodeURIComponent(note_id)}`),
+  // Add more task endpoints as needed (get, update, delete, etc.)
+}
 
 export default {
   notesApi,
+  tasksApi,
 };

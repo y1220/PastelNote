@@ -18,6 +18,9 @@ export function NotesList() {
   const [editForm, setEditForm] = useState({ title: '', content: '', tags: '' })
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
+  const [graphifyLoading, setGraphifyLoading] = useState<string | null>(null)
+  const [graphifyError, setGraphifyError] = useState<string | null>(null)
+  const [graphifyErrorNoteId, setGraphifyErrorNoteId] = useState<string | null>(null)
   // Pagination state
   const [page, setPage] = useState(1)
   const [pageSize] = useState(3)
@@ -97,6 +100,26 @@ export function NotesList() {
     setEditLoading(false)
   }
 
+  const handleGraphify = async (noteId: string) => {
+    setGraphifyLoading(noteId)
+    setGraphifyError(null)
+    setGraphifyErrorNoteId(null)
+    try {
+      const response = await notesApi.graphify(noteId)
+      if (response.error) {
+        setGraphifyError(response.error)
+        setGraphifyErrorNoteId(noteId)
+      } else {
+        window.open(`/graph/${noteId}`, '_blank')
+      }
+    } catch (err: any) {
+      setGraphifyError(err.message || 'Failed to graphify note.')
+      setGraphifyErrorNoteId(noteId)
+    } finally {
+      setGraphifyLoading(null)
+    }
+  }
+
   if (loading) {
     return <div className="text-center text-pastel-secondary py-8">Loading notes...</div>
   }
@@ -128,20 +151,39 @@ export function NotesList() {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between gap-2">
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="text-pastel-secondary">
+              <div className="flex gap-2 items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-pastel-secondary"
+                  onClick={() => handleGraphify(note.id || note._id)}
+                  disabled={graphifyLoading === (note.id || note._id)}
+                >
                   <Network className="h-4 w-4 mr-2" />
-                  View in Graph
+                  {graphifyLoading === (note.id || note._id) ? 'Graphifying...' : 'View in Graph'}
                 </Button>
                 <Button variant="outline" size="sm" className="text-pastel-secondary">
                   <Sparkles className="h-4 w-4 mr-2" />
                   AI Insights
                 </Button>
+                <a
+                  href={`/graph/registered-tasks?noteId=${note.id || note._id}`}
+                  className="inline-flex items-center px-3 py-1 text-sm font-medium rounded border border-pastel-secondary text-pastel-secondary hover:bg-pastel-light transition-colors ml-2"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <span className="mr-2">See Tasks</span>
+                  <span role="img" aria-label="tasks">📝</span>
+                </a>
               </div>
               <Button variant="outline" size="sm" className="text-pastel-secondary" onClick={() => openEditModal(note)}>
                 Edit
               </Button>
             </CardFooter>
+            {graphifyError && graphifyLoading === null && (graphifyErrorNoteId === (note.id || note._id)) && (
+              <div className="text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2 text-xs mt-2 whitespace-pre-wrap">
+                {graphifyError}
+              </div>
+            )}
           </Card>
         ))}
       </div>
