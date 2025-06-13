@@ -71,6 +71,27 @@ export const notesApi = {
   graphify: (id: string) => apiCall<any>(`/graphify-note`, 'POST', { note_id: id }),
 };
 
+// Registered Tasks API
+export const registeredTasksApi = {
+  register: (task: { note_id: string; task_id: string; status: string }) =>
+    apiCall<any>('/registered-tasks/register-task', 'POST', task),
+  registerBatch: (tasks: { note_id: string; task_id: string; status: string }[]) =>
+    apiCall<any>('/registered-tasks/register-tasks-batch', 'POST', { tasks }),
+  remove: (task: { note_id: string; task_id: string }) =>
+    apiCall<any>('/registered-tasks/remove-task', 'POST', task),
+  getByNoteId: (note_id: string) =>
+    apiCall<any>(`/registered-tasks/${note_id}`, 'GET'),
+}
+
+// Tasks API
+export const tasksApi = {
+  create: (task: { title: string; description: string; status: string }) =>
+    apiCall<any>('/tasks', 'POST', task),
+  // Add more task endpoints as needed (get, update, delete, etc.)
+}
+
 export default {
   notesApi,
+  registeredTasksApi,
+  tasksApi,
 };

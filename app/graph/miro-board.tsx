@@ -5,6 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { registeredTasksApi, tasksApi } from "@/lib/api"
+import { CreateTaskButton } from "@/components/create-task-button"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function MiroBoardPage({ graphData: initialGraphData }: { graphData?: { nodes: any[] } }) {
   // If graphData is not passed as prop, fetch from API (global graph)
@@ -14,6 +20,9 @@ export default function MiroBoardPage({ graphData: initialGraphData }: { graphDa
   const [statuses, setStatuses] = useState<{ [id: string]: string }>({})
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [registering, setRegistering] = useState(false)
+  const [showTaskEditDialog, setShowTaskEditDialog] = useState(false)
+  const [tasksToEdit, setTasksToEdit] = useState<any[]>([])
   const router = useRouter()
 
   useEffect(() => {
@@ -63,9 +72,44 @@ export default function MiroBoardPage({ graphData: initialGraphData }: { graphDa
     setChecked(c => ({ ...c, [id]: !c[id] }))
   }
 
-  const handleRegister = (id: string) => {
-    setRegistered(r => ({ ...r, [id]: true }))
-  }
+  // Register all checked tasks (open edit dialog first)
+  const handleRegisterAll = () => {
+    const selectedTasks = graphData.nodes.filter(n => checked[n.id] && !registered[n.id]);
+    if (selectedTasks.length === 0) return;
+    // Pre-fill with current name/description/status
+    setTasksToEdit(selectedTasks.map(n => ({
+      ...n,
+      name: n.name || n.label || '',
+      description: n.description || '',
+      status: statuses[n.id] || 'todo',
+    })));
+    setShowTaskEditDialog(true);
+  };
+
+  // Save all edited tasks (create them)
+  const handleSaveEditedTasks = async () => {
+    setRegistering(true);
+    try {
+      for (const task of tasksToEdit) {
+        await tasksApi.create({
+          title: task.name,
+          description: task.description,
+          status: task.status,
+        });
+      }
+      setShowTaskEditDialog(false);
+      setRegistered(r => {
+        const next = { ...r };
+        tasksToEdit.forEach(t => { next[t.id] = true; });
+        return next;
+      });
+      setError(null);
+    } catch (e: any) {
+      setError(e.message || "Failed to create tasks.");
+    } finally {
+      setRegistering(false);
+    }
+  };
 
   const handleRemove = (id: string) => {
     setRegistered(r => ({ ...r, [id]: false }))
@@ -96,6 +140,7 @@ export default function MiroBoardPage({ graphData: initialGraphData }: { graphDa
               <>
                 <div className="mb-6">
                   <h2 className="font-bold text-lg mb-2">Task List</h2>
+                  <CreateTaskButton onTaskCreated={() => {/* Optionally refresh tasks here */}} />
                   <ul className="space-y-2">
                     {graphData.nodes.map(node => (
                       <li key={node.id} className="flex items-center gap-2">
@@ -107,34 +152,42 @@ export default function MiroBoardPage({ graphData: initialGraphData }: { graphDa
                         />
                         <span className="font-medium">{node.name || node.label || node.id}</span>
                         <span className="text-xs text-pastel-secondary ml-2">{node.type}</span>
-                        {checked[node.id] && !registered[node.id] && (
-                          <Button size="sm" className="ml-4" onClick={() => handleRegister(node.id)}>
-                            Register
-                          </Button>
-                        )}
                       </li>
                     ))}
                   </ul>
+                  {Object.values(checked).some(Boolean) && (
+                    <Button
+                      className="mt-4"
+                      onClick={handleRegisterAll}
+                      disabled={registering}
+                    >
+                      {registering ? "Registering..." : "Register Selected Tasks"}
+                    </Button>
+                  )}
                 </div>
                 <div>
                   <h2 className="font-bold text-lg mb-2">Registered Tasks</h2>
                   <div className="flex flex-wrap gap-4">
                     {graphData.nodes.filter(n => registered[n.id]).map(node => (
-                      <div key={node.id} className="rounded shadow px-3 py-2 bg-white border border-pastel-primary/30 min-w-[140px] min-h-[70px] relative">
-                        <div className="font-semibold mb-1">{node.name || node.label || node.id}</div>
-                        <div className="text-xs text-pastel-secondary mb-1">{node.type}</div>
-                        <select
-                          value={statuses[node.id] || "todo"}
-                          onChange={e => handleStatusChange(node.id, e.target.value)}
-                          className="text-xs rounded border"
-                        >
-                          <option value="todo">To Do</option>
-                          <option value="in-progress">In Progress</option>
-                          <option value="done">Done</option>
-                        </select>
-                        <Button size="sm" variant="ghost" className="absolute top-1 right-1 text-xs text-red-500" onClick={() => handleRemove(node.id)}>
-                          Remove
-                        </Button>
+                      <div key={node.id} className="rounded shadow px-3 py-2 bg-white border border-pastel-primary/30 min-w-[180px] min-h-[90px] w-[180px] h-[90px] flex flex-col justify-between relative">
+                        <div>
+                          <div className="font-semibold mb-1">{node.name || node.label || node.id}</div>
+                          <div className="text-xs text-pastel-secondary mb-1">{node.type}</div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <select
+                            value={statuses[node.id] || "todo"}
+                            onChange={e => handleStatusChange(node.id, e.target.value)}
+                            className="text-xs rounded border flex-1"
+                          >
+                            <option value="todo">To Do</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="done">Done</option>
+                          </select>
+                          <Button size="sm" variant="ghost" className="text-xs text-red-500" onClick={() => handleRemove(node.id)}>
+                            Remove
+                          </Button>
+                        </div>
                       </div>
                     ))}
                     {graphData.nodes.filter(n => registered[n.id]).length === 0 && (
@@ -143,6 +196,72 @@ export default function MiroBoardPage({ graphData: initialGraphData }: { graphDa
                   </div>
                 </div>
               </>
+            )}
+            {showTaskEditDialog && (
+              <Dialog open={showTaskEditDialog} onOpenChange={setShowTaskEditDialog}>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>Edit and Save Tasks</DialogTitle>
+                    <DialogDescription>
+                      Edit the name and description for each task before saving.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                    {tasksToEdit.map((task, idx) => (
+                      <div key={task.id} className="border rounded p-3 bg-pastel-bg">
+                        <div className="mb-2">
+                          <Label>Name</Label>
+                          <Input
+                            value={task.name}
+                            onChange={e => {
+                              const updated = [...tasksToEdit];
+                              updated[idx].name = e.target.value;
+                              setTasksToEdit(updated);
+                            }}
+                            className="w-full"
+                          />
+                        </div>
+                        <div className="mb-2">
+                          <Label>Description</Label>
+                          <Textarea
+                            value={task.description}
+                            onChange={e => {
+                              const updated = [...tasksToEdit];
+                              updated[idx].description = e.target.value;
+                              setTasksToEdit(updated);
+                            }}
+                            className="w-full min-h-[60px]"
+                          />
+                        </div>
+                        <div>
+                          <Label>Status</Label>
+                          <select
+                            value={task.status}
+                            onChange={e => {
+                              const updated = [...tasksToEdit];
+                              updated[idx].status = e.target.value;
+                              setTasksToEdit(updated);
+                            }}
+                            className="w-full border rounded px-2 py-1"
+                          >
+                            <option value="todo">To Do</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="done">Done</option>
+                          </select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setShowTaskEditDialog(false)} disabled={registering}>
+                      Cancel
+                    </Button>
+                    <Button type="button" className="bg-pastel-primary hover:bg-pastel-primary/90" onClick={handleSaveEditedTasks} disabled={registering}>
+                      {registering ? "Saving..." : "Save All Tasks"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             )}
           </CardContent>
         </Card>
