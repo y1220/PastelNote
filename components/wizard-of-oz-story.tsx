@@ -752,7 +752,7 @@ export default function Component() {
             <text x="160" y="60" fill="#eab308" fontSize="22">
               🎉
             </text>
-            <text x="110" y="75" fill="#eab308" fontSize="19">
+            <text x="110" y="75" fill="#fbbf24" fontSize="25">
               ✨
             </text>
             <text x="350" y="67" fill="#eab308" fontSize="16">
@@ -1096,46 +1096,47 @@ export default function Component() {
         </div>
 
         {/* Chapter Card */}
-        <Card className="overflow-hidden border-0 bg-white/90 backdrop-blur-sm shadow-2xl">
-          <div className={`h-3 bg-gradient-to-r ${currentChapterData.color}`} />
-
-          <CardContent className="p-8">
-            {/* Chapter Header */}
-            <div className="flex items-center justify-between mb-6">
-              <Badge variant="secondary" className="text-lg font-semibold px-4 py-2">
-                第{currentChapterData.id}章
-              </Badge>
-              <div className="text-4xl">
-                {currentChapterData.id <= 3
-                  ? "🌪️"
-                  : currentChapterData.id <= 7
-                    ? "🛤️"
-                    : currentChapterData.id <= 10
-                      ? "🏰"
-                      : currentChapterData.id <= 13
-                        ? "⚔️"
-                        : currentChapterData.id <= 18
-                          ? "🎭"
-                          : "🏠"}
+        <div className="flex justify-center items-center w-full my-8">
+          <Card className="overflow-hidden border-0 bg-white/90 backdrop-blur-sm shadow-2xl" style={{ width: 880, minHeight: 340, maxHeight: 340, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+            <div className={`h-3 bg-gradient-to-r ${currentChapterData.color}`} />
+            <CardContent className="p-8 flex flex-col h-full justify-start" style={{ flex: 1, overflow: 'hidden' }}>
+              {/* Chapter Header */}
+              <div className="flex items-center justify-between mb-6">
+                <Badge variant="secondary" className="text-lg font-semibold px-4 py-2">
+                  第{currentChapterData.id}章
+                </Badge>
+                <div className="text-4xl">
+                  {currentChapterData.id <= 3
+                    ? "🌪️"
+                    : currentChapterData.id <= 7
+                      ? "🛤️"
+                      : currentChapterData.id <= 10
+                        ? "🏰"
+                        : currentChapterData.id <= 13
+                          ? "⚔️"
+                          : currentChapterData.id <= 18
+                            ? "🎭"
+                            : "🏠"}
+                </div>
               </div>
-            </div>
 
-            {/* Chapter Title */}
-            <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">{currentChapterData.title}</h2>
+              {/* Chapter Title */}
+              <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">{currentChapterData.title}</h2>
 
-            {/* Illustration */}
-            <div className="mb-4 flex justify-center items-center">
-              <div className="rounded-xl overflow-hidden shadow-lg bg-white" style={{ width: 180, height: 120, minWidth: 120, minHeight: 80 }}>
-                {renderChapterIllustration(currentChapterData.id)}
+              {/* Illustration */}
+              <div className="mb-4 flex justify-center items-center">
+                <div className="rounded-xl overflow-hidden shadow-lg bg-white" style={{ width: 120, height: 80, minWidth: 80, minHeight: 60 }}>
+                  {renderChapterIllustration(currentChapterData.id)}
+                </div>
               </div>
-            </div>
 
-            {/* Story Text */}
-            <div className="prose prose-lg max-w-none">
-              <p className="text-gray-700 leading-relaxed text-lg">{currentChapterData.description}</p>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Story Text */}
+              <div className="prose prose-lg max-w-none" style={{ flex: 1, overflow: 'auto' }}>
+                <p className="text-gray-700 leading-relaxed text-lg">{currentChapterData.description}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Navigation Controls */}
         <div className="flex justify-between items-center mt-8">
@@ -1169,14 +1170,17 @@ export default function Component() {
         </div>
 
         {/* Chapter Navigation Dots */}
-        <div className="flex justify-center mt-6 gap-2">
+        <div className="flex justify-center mt-6 gap-2 flex-wrap">
           {chapters.map((chapter) => (
             <button
               key={chapter.id}
               onClick={() => setCurrentChapter(chapter.id)}
-              className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                chapter.id === currentChapter ? "bg-purple-500 scale-125" : "bg-gray-300 hover:bg-gray-400"
-              }`}
+              className={`w-3 h-3 rounded-full transition-all duration-200 cursor-pointer`}
+              style={{
+                backgroundColor: chapter.id === currentChapter ? '#e879f9' : '#cbd5e1', // pastel magenta for active, slate-200 for inactive
+                transform: chapter.id === currentChapter ? 'scale(1.25)' : 'scale(1)',
+                boxShadow: chapter.id === currentChapter ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none',
+              }}
               aria-label={`第${chapter.id}章へ移動`}
             />
           ))}
@@ -1184,19 +1188,23 @@ export default function Component() {
 
         {/* End Message */}
         {currentChapter === totalChapters && (
-          <div className="text-center mt-12 p-8 bg-white/50 backdrop-blur-sm rounded-2xl">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">✨ 物語の終わり ✨</h3>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              ドロシーの冒険を通して、私たちは友情、勇気、そして家族の大切さを学びました。
-              どんなに遠くへ行っても、心の故郷はいつも私たちと共にあるのです。
-            </p>
-            <Button
-              onClick={() => setCurrentChapter(1)}
-              className="mt-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-            >
-              最初から読み直す
-            </Button>
-          </div>
+          <>
+            <br/>
+            <br/>
+            <div className="text-center mt-12 p-8 bg-white/50 backdrop-blur-sm rounded-2xl">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">✨ 物語の終わり ✨</h3>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                ドロシーの冒険を通して、私たちは友情、勇気、そして家族の大切さを学びました。
+                どんなに遠くへ行っても、心の故郷はいつも私たちと共にあるのです。
+              </p>
+              <Button
+                onClick={() => setCurrentChapter(1)}
+                className="mt-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              >
+                最初から読み直す
+              </Button>
+            </div>
+          </>
         )}
       </div>
     </div>
