@@ -2,12 +2,12 @@
 
 import React, { useEffect } from "react"
 import "@/app/globals.css"
-import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Header } from "@/components/header"
 import logger from "@/lib/logger"
+import { Quicksand } from "next/font/google"
 
-const inter = Inter({ subsets: ["latin"] })
+const quicksand = Quicksand({ subsets: ["latin"], weight: ["400", "500", "600", "700"] })
 
 export default function RootLayout({
   children,
@@ -22,7 +22,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={quicksand.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <Header />
           {children}
