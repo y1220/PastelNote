@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Tag, Network, Sparkles, CheckSquare, Pencil, Cog } from "lucide-react"
+import { Clock, Tag, Network, Sparkles, CheckSquare, Pencil, Cog, BookOpen } from "lucide-react"
 import { notesApi } from "@/lib/api"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
-export function NotesList() {
+export function NotesList({ onNoteClick }: { onNoteClick?: (note: any) => void }) {
   const [notes, setNotes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -131,33 +131,43 @@ export function NotesList() {
 
   return (
     <>
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {notes.map((note) => (
-          <Card key={note.id || note._id} className="bg-white hover:shadow-lg transition-shadow relative">
+          <Card
+            key={note.id || note._id}
+            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/60 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:scale-105 relative"
+            onClick={e => {
+              // Prevent card click if clicking on a button or dropdown
+              if (
+                (e.target as HTMLElement).closest('button, [role="menu"]')
+              ) return;
+              onNoteClick && onNoteClick(note)
+            }}
+          >
             {/* Settings dropdown for note actions - absolutely positioned top right */}
-            <div className="absolute top-3 right-3 z-10">
+            <div className="absolute top-4 right-4 z-10">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-pastel-secondary" aria-label="Note Actions">
+                  <Button variant="ghost" size="icon" className="text-pastel-secondary" aria-label="Note Actions" onClick={e => e.stopPropagation()}>
                     <Cog className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
                   <DropdownMenuItem
-                    onClick={() => handleGraphify(note.id || note._id)}
+                    onClick={e => { e.stopPropagation(); handleGraphify(note.id || note._id) }}
                     disabled={graphifyLoading === (note.id || note._id)}
                   >
                     <Network className="h-4 w-4 mr-2" />
                     {graphifyLoading === (note.id || note._id) ? 'Graphifying...' : 'View in Graph'}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => {/* TODO: AI Insights action */}}
+                    onClick={e => e.stopPropagation() /* TODO: AI Insights action */}
                   >
                     <Sparkles className="h-4 w-4 mr-2" />
                     AI Insights
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => window.location.href = `/graph/registered-tasks?noteId=${note.id || note._id}`}
+                    onClick={e => { e.stopPropagation(); window.location.href = `/graph/registered-tasks?noteId=${note.id || note._id}` }}
                   >
                     <CheckSquare className="h-4 w-4 mr-2" />
                     See Tasks
@@ -165,46 +175,47 @@ export function NotesList() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <TooltipProvider>
-                  <Tooltip delayDuration={200}>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-pastel-secondary"
-                        onClick={() => openEditModal(note)}
-                        aria-label="Edit Note"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="select-none">
-                      Edit
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <CardTitle className="text-pastel-primary font-bold tracking-wide text-xl">{note.title}</CardTitle>
+            <div className="flex items-start gap-4 mb-4">
+              <div className="flex-shrink-0 flex items-center justify-center bg-pastel-light rounded-full w-12 h-12 text-pastel-primary text-2xl">
+                <BookOpen className="h-7 w-7" />
               </div>
-              <CardDescription className="flex items-center text-pastel-secondary font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] font-normal tracking-normal text-base">
-                <Clock className="h-4 w-4 mr-1" />
-                Updated {formatDate(note.updatedAt || note.updated_at || note.createdAt || note.created_at)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-pastel-dark mb-4 font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] font-normal tracking-normal text-base">{note.content}</p>
-              <div className="flex flex-wrap gap-2">
-                {(note.tags || []).map((tag: string) => (
-                  <Badge key={tag} variant="outline" className="bg-pastel-light text-pastel-secondary">
-                    <Tag className="h-3 w-3 mr-1" />
-                    {tag}
-                  </Badge>
-                ))}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <TooltipProvider>
+                    <Tooltip delayDuration={200}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-pastel-secondary"
+                          onClick={e => { e.stopPropagation(); openEditModal(note) }}
+                          aria-label="Edit Note"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="select-none">
+                        Edit
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <h3 className="font-bold text-pastel-primary text-xl font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] truncate">{note.title}</h3>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-1">
+                  {(note.tags || []).map((tag: string) => (
+                    <Badge key={tag} variant="outline" className="bg-pastel-light text-pastel-secondary font-medium">
+                      <Tag className="h-3 w-3 mr-1" />
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex items-center text-pastel-secondary text-sm mb-1">
+                  <Clock className="h-4 w-4 mr-1" />
+                  Updated {formatDate(note.updatedAt || note.updated_at || note.createdAt || note.created_at)}
+                </div>
+                <p className="text-pastel-dark font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] text-base line-clamp-2 mb-0">{note.content}</p>
               </div>
-            </CardContent>
-            <CardFooter className="flex justify-between gap-2">
-            </CardFooter>
+            </div>
             {graphifyError && graphifyLoading === null && (graphifyErrorNoteId === (note.id || note._id)) && (
               <div className="text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2 text-xs mt-2 whitespace-pre-wrap">
                 {graphifyError}

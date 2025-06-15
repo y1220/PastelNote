@@ -97,6 +97,7 @@ export function Header() {
 
           <nav className="hidden md:flex items-center space-x-1">
             <NavButton view="notes" path="/notes">Notes</NavButton>
+            <NavButton view="library" path="/library">Library</NavButton>
             <NavButton view="graph" path="/graph">Graph</NavButton>
             <NavButton view="ai" path="/ai-assistant">AI Assistant</NavButton>
             <ModeToggle />

@@ -1,9 +1,14 @@
+"use client"
 import { NotesList } from "@/components/notes-list"
 import { CatMascot } from "@/components/cat-mascot"
 import { CreateNoteButton } from "@/components/create-note-button"
 import { NotesApiTest } from "@/components/notes-api-test"
+import { NoteDetail } from "@/components/note-detail"
+import { useState } from "react"
 
 export default function HomePage() {
+  const [selectedNote, setSelectedNote] = useState<any | null>(null)
+
   return (
     <div className="min-h-screen bg-pastel-bg">
       <div className="container mx-auto px-4 py-8">
@@ -16,10 +21,14 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold text-pastel-primary">Your Notes</h2>
+              <h2 className="text-2xl font-semibold text-pastel-primary">Dream Garden</h2>
               <CreateNoteButton />
             </div>
-            <NotesList />
+            {selectedNote ? (
+              <NoteDetail note={selectedNote} onClose={() => setSelectedNote(null)} />
+            ) : (
+              <NotesList onNoteClick={setSelectedNote} />
+            )}
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
