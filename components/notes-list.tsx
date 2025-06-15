@@ -4,12 +4,13 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Tag, Network, Sparkles, CheckSquare, Pencil } from "lucide-react"
+import { Clock, Tag, Network, Sparkles, CheckSquare, Pencil, Cog } from "lucide-react"
 import { notesApi } from "@/lib/api"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
 export function NotesList() {
   const [notes, setNotes] = useState<any[]>([])
@@ -132,7 +133,38 @@ export function NotesList() {
     <>
       <div className="grid gap-4">
         {notes.map((note) => (
-          <Card key={note.id || note._id} className="bg-white hover:shadow-lg transition-shadow">
+          <Card key={note.id || note._id} className="bg-white hover:shadow-lg transition-shadow relative">
+            {/* Settings dropdown for note actions - absolutely positioned top right */}
+            <div className="absolute top-3 right-3 z-10">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-pastel-secondary" aria-label="Note Actions">
+                    <Cog className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => handleGraphify(note.id || note._id)}
+                    disabled={graphifyLoading === (note.id || note._id)}
+                  >
+                    <Network className="h-4 w-4 mr-2" />
+                    {graphifyLoading === (note.id || note._id) ? 'Graphifying...' : 'View in Graph'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {/* TODO: AI Insights action */}}
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    AI Insights
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => window.location.href = `/graph/registered-tasks?noteId=${note.id || note._id}`}
+                  >
+                    <CheckSquare className="h-4 w-4 mr-2" />
+                    See Tasks
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <TooltipProvider>
@@ -153,7 +185,7 @@ export function NotesList() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <CardTitle className="text-pastel-primary font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] font-semibold tracking-wide text-lg">{note.title}</CardTitle>
+                <CardTitle className="text-pastel-primary font-bold tracking-wide text-xl">{note.title}</CardTitle>
               </div>
               <CardDescription className="flex items-center text-pastel-secondary font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] font-normal tracking-normal text-base">
                 <Clock className="h-4 w-4 mr-1" />
@@ -172,31 +204,6 @@ export function NotesList() {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between gap-2">
-              <div className="flex gap-2 items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-pastel-secondary"
-                  onClick={() => handleGraphify(note.id || note._id)}
-                  disabled={graphifyLoading === (note.id || note._id)}
-                >
-                  <Network className="h-4 w-4 mr-2" />
-                  {graphifyLoading === (note.id || note._id) ? 'Graphifying...' : 'View in Graph'}
-                </Button>
-                <Button variant="outline" size="sm" className="text-pastel-secondary">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  AI Insights
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-pastel-secondary"
-                  onClick={() => window.location.href = `/graph/registered-tasks?noteId=${note.id || note._id}`}
-                >
-                  <CheckSquare className="h-4 w-4 mr-2" />
-                  See Tasks
-                </Button>
-              </div>
             </CardFooter>
             {graphifyError && graphifyLoading === null && (graphifyErrorNoteId === (note.id || note._id)) && (
               <div className="text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2 text-xs mt-2 whitespace-pre-wrap">
