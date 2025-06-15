@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Tag, Network, Sparkles, CheckSquare } from "lucide-react"
+import { Clock, Tag, Network, Sparkles, CheckSquare, Pencil } from "lucide-react"
 import { notesApi } from "@/lib/api"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export function NotesList() {
   const [notes, setNotes] = useState<any[]>([])
@@ -133,14 +134,34 @@ export function NotesList() {
         {notes.map((note) => (
           <Card key={note.id || note._id} className="bg-white hover:shadow-lg transition-shadow">
             <CardHeader>
-              <CardTitle className="text-pastel-primary">{note.title}</CardTitle>
-              <CardDescription className="flex items-center text-pastel-secondary">
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-pastel-secondary"
+                        onClick={() => openEditModal(note)}
+                        aria-label="Edit Note"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="select-none">
+                      Edit
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <CardTitle className="text-pastel-primary font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] font-semibold tracking-wide text-lg">{note.title}</CardTitle>
+              </div>
+              <CardDescription className="flex items-center text-pastel-secondary font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] font-normal tracking-normal text-base">
                 <Clock className="h-4 w-4 mr-1" />
                 Updated {formatDate(note.updatedAt || note.updated_at || note.createdAt || note.created_at)}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-pastel-dark mb-4">{note.content}</p>
+              <p className="text-pastel-dark mb-4 font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] font-normal tracking-normal text-base">{note.content}</p>
               <div className="flex flex-wrap gap-2">
                 {(note.tags || []).map((tag: string) => (
                   <Badge key={tag} variant="outline" className="bg-pastel-light text-pastel-secondary">
@@ -176,9 +197,6 @@ export function NotesList() {
                   See Tasks
                 </Button>
               </div>
-              <Button variant="outline" size="sm" className="text-pastel-secondary" onClick={() => openEditModal(note)}>
-                Edit
-              </Button>
             </CardFooter>
             {graphifyError && graphifyLoading === null && (graphifyErrorNoteId === (note.id || note._id)) && (
               <div className="text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2 text-xs mt-2 whitespace-pre-wrap">

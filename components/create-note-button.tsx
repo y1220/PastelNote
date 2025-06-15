@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Plus } from "lucide-react"
+import { BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { notesApi } from "@/lib/api"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export function CreateNoteButton({ onNoteCreated }: { onNoteCreated?: () => void } = {}) {
   const [open, setOpen] = useState(false)
@@ -56,12 +57,20 @@ export function CreateNoteButton({ onNoteCreated }: { onNoteCreated?: () => void
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-pastel-primary hover:bg-pastel-primary/90">
-          <Plus className="h-4 w-4 mr-2" />
-          New Note
-        </Button>
-      </DialogTrigger>
+      <TooltipProvider>
+        <Tooltip delayDuration={200}>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <Button className="bg-pastel-primary hover:bg-pastel-primary/90 p-2 h-10 w-10 rounded-full flex items-center justify-center" aria-label="New Note">
+                <BookOpen className="h-5 w-5" />
+              </Button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="select-none">
+            New Note
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <DialogContent className="sm:max-w-[525px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -118,7 +127,7 @@ export function CreateNoteButton({ onNoteCreated }: { onNoteCreated?: () => void
               Cancel
             </Button>
             <Button type="submit" className="bg-pastel-primary hover:bg-pastel-primary/90" disabled={loading}>
-              {loading ? "Saving..." : "Save Note"}
+              {loading ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>
         </form>
