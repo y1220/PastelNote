@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { NoteDetail } from "@/components/note-detail"
 
 export function NotesList({ onNoteClick }: { onNoteClick?: (note: any) => void }) {
   const [notes, setNotes] = useState<any[]>([])
@@ -23,6 +24,7 @@ export function NotesList({ onNoteClick }: { onNoteClick?: (note: any) => void }
   const [graphifyLoading, setGraphifyLoading] = useState<string | null>(null)
   const [graphifyError, setGraphifyError] = useState<string | null>(null)
   const [graphifyErrorNoteId, setGraphifyErrorNoteId] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState<string | null>(null)
   // Pagination state
   const [page, setPage] = useState(1)
   const [pageSize] = useState(3)
@@ -133,95 +135,115 @@ export function NotesList({ onNoteClick }: { onNoteClick?: (note: any) => void }
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {notes.map((note) => (
-          <Card
-            key={note.id || note._id}
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/60 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:scale-105 relative"
-            onClick={e => {
-              // Prevent card click if clicking on a button or dropdown
-              if (
-                (e.target as HTMLElement).closest('button, [role="menu"]')
-              ) return;
-              onNoteClick && onNoteClick(note)
-            }}
-          >
-            {/* Settings dropdown for note actions - absolutely positioned top right */}
-            <div className="absolute top-4 right-4 z-10">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-pastel-secondary" aria-label="Note Actions" onClick={e => e.stopPropagation()}>
-                    <Cog className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
-                  <DropdownMenuItem
-                    onClick={e => { e.stopPropagation(); handleGraphify(note.id || note._id) }}
-                    disabled={graphifyLoading === (note.id || note._id)}
-                  >
-                    <Network className="h-4 w-4 mr-2" />
-                    {graphifyLoading === (note.id || note._id) ? 'Graphifying...' : 'View in Graph'}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={e => e.stopPropagation() /* TODO: AI Insights action */}
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    AI Insights
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={e => { e.stopPropagation(); window.location.href = `/graph/registered-tasks?noteId=${note.id || note._id}` }}
-                  >
-                    <CheckSquare className="h-4 w-4 mr-2" />
-                    See Tasks
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <div className="flex items-start gap-4 mb-4">
-              <div className="flex-shrink-0 flex items-center justify-center bg-pastel-light rounded-full w-12 h-12 text-pastel-primary text-2xl">
-                <BookOpen className="h-7 w-7" />
+          <div key={note.id || note._id}>
+            <Card
+              className={`bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/60 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:scale-105 relative ${expanded === (note.id || note._id) ? 'ring-2 ring-pastel-primary shadow-lg' : ''}`}
+              onClick={e => {
+                // Prevent card click if clicking on a button or dropdown
+                if ((e.target as HTMLElement).closest('button, [role="menu"]')) return;
+                setExpanded(expanded === (note.id || note._id) ? null : (note.id || note._id));
+              }}
+            >
+              {/* Settings dropdown for note actions - absolutely positioned top right */}
+              <div className="absolute top-4 right-4 z-10">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-pastel-secondary" aria-label="Note Actions" onClick={e => e.stopPropagation()}>
+                      <Cog className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
+                    <DropdownMenuItem
+                      onClick={e => { e.stopPropagation(); handleGraphify(note.id || note._id) }}
+                      disabled={graphifyLoading === (note.id || note._id)}
+                    >
+                      <Network className="h-4 w-4 mr-2" />
+                      {graphifyLoading === (note.id || note._id) ? 'Graphifying...' : 'View in Graph'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={e => e.stopPropagation() /* TODO: AI Insights action */}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      AI Insights
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={e => { e.stopPropagation(); window.location.href = `/graph/registered-tasks?noteId=${note.id || note._id}` }}
+                    >
+                      <CheckSquare className="h-4 w-4 mr-2" />
+                      See Tasks
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <TooltipProvider>
-                    <Tooltip delayDuration={200}>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-pastel-secondary"
-                          onClick={e => { e.stopPropagation(); openEditModal(note) }}
-                          aria-label="Edit Note"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="select-none">
-                        Edit
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <h3 className="font-bold text-pastel-primary text-xl font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] truncate">{note.title}</h3>
+              <div className="flex items-start gap-4 mb-4">
+                <div className="flex-shrink-0 flex items-center justify-center bg-pastel-light rounded-full w-12 h-12 text-pastel-primary text-2xl">
+                  <BookOpen className="h-7 w-7" />
                 </div>
-                <div className="flex flex-wrap gap-2 mb-1">
-                  {(note.tags || []).map((tag: string) => (
-                    <Badge key={tag} variant="outline" className="bg-pastel-light text-pastel-secondary font-medium">
-                      <Tag className="h-3 w-3 mr-1" />
-                      {tag}
-                    </Badge>
-                  ))}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TooltipProvider>
+                      <Tooltip delayDuration={200}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-pastel-secondary"
+                            onClick={e => { e.stopPropagation(); openEditModal(note) }}
+                            aria-label="Edit Note"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="select-none">
+                          Edit
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <h3 className="font-bold text-pastel-primary text-xl font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] truncate">{note.title}</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-1">
+                    {(note.tags || []).map((tag: string) => (
+                      <Badge key={tag} variant="outline" className="bg-pastel-light text-pastel-secondary font-medium">
+                        <Tag className="h-3 w-3 mr-1" />
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex items-center text-pastel-secondary text-sm mb-1">
+                    <Clock className="h-4 w-4 mr-1" />
+                    Updated {formatDate(note.updatedAt || note.updated_at || note.createdAt || note.created_at)}
+                  </div>
+                  {/* Growth Progress */}
+                  <div className="mb-2">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">Growth Progress</span>
+                      <span className="font-medium text-emerald-600">{note.growth ? `${note.growth}%` : '—'}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-gradient-to-r from-emerald-400 to-green-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${note.growth || 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-pastel-dark font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] text-base line-clamp-2 mb-0">{note.content}</p>
                 </div>
-                <div className="flex items-center text-pastel-secondary text-sm mb-1">
-                  <Clock className="h-4 w-4 mr-1" />
-                  Updated {formatDate(note.updatedAt || note.updated_at || note.createdAt || note.created_at)}
-                </div>
-                <p className="text-pastel-dark font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] text-base line-clamp-2 mb-0">{note.content}</p>
               </div>
-            </div>
-            {graphifyError && graphifyLoading === null && (graphifyErrorNoteId === (note.id || note._id)) && (
-              <div className="text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2 text-xs mt-2 whitespace-pre-wrap">
-                {graphifyError}
-              </div>
-            )}
-          </Card>
+              {graphifyError && graphifyLoading === null && (graphifyErrorNoteId === (note.id || note._id)) && (
+                <div className="text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2 text-xs mt-2 whitespace-pre-wrap">
+                  {graphifyError}
+                </div>
+              )}
+              {expanded === (note.id || note._id) && (
+                <div className="mt-4 animate-in slide-in-from-top-2 duration-200">
+                  <div className="bg-white/90 rounded-xl shadow p-6 border border-pastel-light max-w-2xl mx-auto">
+                    {/* Show the NoteDetail component for this note */}
+                    <NoteDetail note={note} onClose={() => setExpanded(null)} />
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
         ))}
       </div>
       <div className="flex justify-center items-center gap-4 mt-6">
