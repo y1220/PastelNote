@@ -1105,6 +1105,8 @@ export default function Component() {
                 <Badge variant="secondary" className="text-lg font-semibold px-4 py-2">
                   第{currentChapterData.id}章
                 </Badge>
+                 {/* Chapter Title */}
+                <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">{currentChapterData.title}</h2>
                 <div className="text-4xl">
                   {currentChapterData.id <= 3
                     ? "🌪️"
@@ -1120,19 +1122,17 @@ export default function Component() {
                 </div>
               </div>
 
-              {/* Chapter Title */}
-              <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">{currentChapterData.title}</h2>
 
               {/* Illustration */}
               <div className="mb-4 flex justify-center items-center">
-                <div className="rounded-xl overflow-hidden shadow-lg bg-white" style={{ width: 120, height: 80, minWidth: 80, minHeight: 60 }}>
+                <div className="rounded-xl overflow-hidden shadow-lg bg-white" style={{ width: 240, height: 160, minWidth: 240, minHeight: 160 }}>
                   {renderChapterIllustration(currentChapterData.id)}
                 </div>
               </div>
 
               {/* Story Text */}
               <div className="prose prose-lg max-w-none" style={{ flex: 1, overflow: 'auto' }}>
-                <p className="text-gray-700 leading-relaxed text-lg">{currentChapterData.description}</p>
+                <p className="text-gray-700 leading-relaxed text">{currentChapterData.description}</p>
               </div>
             </CardContent>
           </Card>

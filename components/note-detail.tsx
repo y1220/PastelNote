@@ -137,8 +137,11 @@ export function NoteDetail({ note, onClose }: { note: any, onClose: () => void }
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
-            className="bg-gradient-to-r from-emerald-400 to-green-500 h-2 rounded-full transition-all duration-500"
-            style={{ width: '50%' }}
+            className="h-2 rounded-full transition-all duration-300"
+            style={{
+              width: '50%',
+              background: 'linear-gradient(to right, #34d399, #10b981)', // emerald-400 to green-500
+            }}
           />
         </div>
       </div>

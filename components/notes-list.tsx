@@ -215,18 +215,34 @@ export function NotesList({ onNoteClick }: { onNoteClick?: (note: any) => void }
                   </div>
                   {/* Growth Progress */}
                   <div className="mb-2">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Growth Progress</span>
-                      <span className="font-medium text-emerald-600">{note.growth ? `${note.growth}%` : '—'}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-gradient-to-r from-emerald-400 to-green-500 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${note.growth || 0}%` }}
-                      />
-                    </div>
+                    {(() => {
+                      // Assign a random progress value (25, 50, or 75) for display only
+                      const progressOptions = [25, 50, 75];
+                      // Use note.id or note._id to ensure stable randomization per note
+                      const id = note.id || note._id || Math.random();
+                      // Simple hash to pick a value based on id
+                      let hash = 0;
+                      for (let i = 0; i < String(id).length; i++) hash += String(id).charCodeAt(i);
+                      const randomProgress = progressOptions[hash % progressOptions.length];
+                      return (
+                        <>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="text-gray-600">Growth Progress</span>
+                            <span className="font-medium text-emerald-600">{randomProgress}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                            <div
+                              className="h-2 rounded-full transition-all duration-500"
+                              style={{
+                                width: `${randomProgress}%`,
+                                background: 'linear-gradient(to right, #34d399, #10b981)',
+                              }}
+                            />
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
-                  <p className="text-pastel-dark font-[Quicksand, Nunito, Comic\ Neue, Arial, sans-serif] text-base line-clamp-2 mb-0">{note.content}</p>
                 </div>
               </div>
               {graphifyError && graphifyLoading === null && (graphifyErrorNoteId === (note.id || note._id)) && (
