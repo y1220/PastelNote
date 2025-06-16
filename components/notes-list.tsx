@@ -176,9 +176,7 @@ export function NotesList({ onNoteClick }: { onNoteClick?: (note: any) => void }
                 </DropdownMenu>
               </div>
               <div className="flex items-start gap-4 mb-4">
-                <div className="flex-shrink-0 flex items-center justify-center bg-pastel-light rounded-full w-12 h-12 text-pastel-primary text-2xl">
-                  <BookOpen className="h-7 w-7" />
-                </div>
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <TooltipProvider>
@@ -252,7 +250,7 @@ export function NotesList({ onNoteClick }: { onNoteClick?: (note: any) => void }
               )}
               {expanded === (note.id || note._id) && (
                 <div className="mt-4 animate-in slide-in-from-top-2 duration-200">
-                  <div className="bg-white/90 rounded-xl shadow p-6 border border-pastel-light max-w-2xl mx-auto">
+                  <div className="bg-white/90 rounded-xl shadow p-6 border border-pastel-light w-full mx-auto">
                     {/* Show the NoteDetail component for this note */}
                     <NoteDetail note={note} onClose={() => setExpanded(null)} />
                   </div>
