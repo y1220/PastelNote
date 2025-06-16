@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Literal
 from bson import ObjectId
 import motor.motor_asyncio
 import os
@@ -15,6 +15,7 @@ class TaskCreate(BaseModel):
     description: Optional[str] = ""
     status: str = "todo"
     note_id: Optional[str] = None
+    priority: Literal['low', 'medium', 'high'] = "medium"  # restrict to allowed values
 
 class Task(TaskCreate):
     id: str
@@ -23,15 +24,18 @@ class Task(TaskCreate):
 def task_from_mongo(doc):
     if not doc:
         return None
-    # Remove aliasing, just use 'id' as a normal field
     doc['id'] = str(doc['_id'])
     doc.pop('_id', None)
-    # Remove '_id' from doc if present, and do not use alias in Task
+    # Validate priority value
+    priority = doc.get('priority', 'medium')
+    if priority not in ['low', 'medium', 'high']:
+        priority = 'medium'
     return Task(
         title=doc.get('title', ''),
         description=doc.get('description', ''),
         status=doc.get('status', 'todo'),
         note_id=doc.get('note_id'),
+        priority=priority,
         id=doc['id']
     )
 
